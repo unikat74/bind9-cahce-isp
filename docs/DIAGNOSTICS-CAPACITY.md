@@ -252,7 +252,7 @@ Pomiar wykonany 7 września 2026 po migracji hazardu do RPZ:
 | Serwer | Rekursje | Szczyt rekursji | TCP | Szczyt TCP | RAM BIND |
 |---|---:|---:|---:|---:|---:|
 | dns1 | 9/900/1000 | 160 | 101/500 | 147 | około 276 MB |
-| dns2 | 1/900/1000 | 40 | 2/500 | 15 | około 196 MB |
+| dns2 | 1/900/1000 | 40 | 2/500 | 32 | około 196 MB |
 
 Aktualny `tcp-clients 500` daje odpowiedni zapas. Nie zwiększaj go ponownie bez
 nowych pomiarów pokazujących trwałe wykorzystanie co najmniej 70–80%.
