@@ -18,9 +18,10 @@ zabezpieczonym transferze TSIG.
 ## Zawartość
 
 - `bind/` — szablony konfiguracji BIND;
+- `servers/` — snapshoty faktycznych konfiguracji dns1 i dns2, z zachowaniem
+  ścieżek systemowych i bez sekretów;
 - `scripts/` — aktualizacja ThreatFox RPZ;
 - `systemd/` — codzienne uruchamianie aktualizacji na dns1;
 - `docs/` — wdrożenie i testy.
 
 Nigdy nie commituj API key, TSIG secret, certyfikatów TLS ani pobranego feedu RPZ.
-

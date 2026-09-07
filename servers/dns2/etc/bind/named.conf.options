@@ -1,0 +1,112 @@
+acl "klienci_sieci" {
+    127.0.0.1;
+    ::1;
+    198.51.96.0/21;
+    203.0.112.0/22;
+    192.168.123.0/24;
+    172.16.0.0/16;
+    172.17.0.0/16;
+    10.0.0.0/16;
+    10.20.0.0/24;
+    10.255.0.0/16;
+    2001:db8:100::/48;
+    fe80::/10;
+};
+
+
+tls dns1_tls {
+    key-file "/etc/bind/tls/dns2.example.net.privkey.pem";
+    cert-file "/etc/bind/tls/dns2.example.net.fullchain.pem";
+};
+
+http dns1_doh {
+    endpoints { "/dns-query"; };
+};
+
+
+options {
+    directory "/var/cache/bind";
+
+    answer-cookie yes;
+    send-cookie yes;
+
+
+    // DoT: dns1.example.net, TCP/853
+    listen-on port 853 tls dns1_tls {
+	198.51.100.11;
+    };
+
+    // DoH: https://dns1.example.net/dns-query, TCP/443
+    listen-on port 443 tls dns1_tls http dns1_doh {
+	198.51.100.11;
+    };
+
+    // DoT po IPv6
+    listen-on-v6 port 853 tls dns1_tls {
+	2001:db8:100:1::3;
+    };
+
+    // DoH po IPv6
+    listen-on-v6 port 443 tls dns1_tls http dns1_doh {
+	2001:db8:100:1::3;
+    };
+
+
+    /*
+     * Publiczny dostęp do stref autorytatywnych,
+     * w tym reverse DNS.
+     */
+    allow-query { any; };
+
+    /*
+     * Rekurencja i cache dostępne tylko
+     * dla zaufanych klientów.
+     */
+    recursion yes;
+    allow-recursion { klienci_sieci; };
+    allow-query-cache { klienci_sieci; };
+
+    forward only;
+
+    forwarders {
+	// Cloudflare
+	1.1.1.1;
+	1.0.0.1;
+	2606:4700:4700::1111;
+	2606:4700:4700::1001;
+
+	// Google Public DNS
+	8.8.8.8;
+	8.8.4.4;
+	2001:4860:4860::8888;
+	2001:4860:4860::8844;
+    };
+
+
+    /*
+     * Domyślnie blokuj transfer stref.
+     * Zezwolenie dla dns2 ustawiamy wewnątrz strefy.
+     */
+    allow-transfer { none; };
+
+    dnssec-validation auto;
+
+    listen-on { any; };
+    listen-on-v6 { any; };
+
+    minimal-responses yes;
+    minimal-any yes;
+    qname-minimization relaxed;
+    max-udp-size 1232;
+    prefetch 2 9;
+
+    dump-file "/var/cache/bind/cache_dump.db";
+    statistics-file "/var/cache/bind/named_stats.txt";
+    memstatistics-file "/var/cache/bind/named_mem_stats.txt";
+
+    version "[Secured]";
+    hostname "[Secured]";
+    server-id "[Secured]";
+
+include "/etc/bind/named.conf.rpz-options";
+};

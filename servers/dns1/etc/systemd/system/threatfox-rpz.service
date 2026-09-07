@@ -1,0 +1,10 @@
+[Unit]
+Description=Aktualizacja feedu ThreatFox RPZ
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=root
+ExecStart=/usr/local/sbin/update-threatfox-rpz
+

@@ -2,6 +2,6 @@
 *.key
 *.pem
 *.env
+installer/inventory.env
 rpz/*.rpz
 var/
-

@@ -1,0 +1,39 @@
+[DEFAULT]
+backend = systemd
+banaction = nftables-multiport
+
+findtime = 10m
+maxretry = 5
+bantime = 1h
+
+bantime.increment = true
+bantime.factor = 2
+bantime.maxtime = 7d
+
+ignoreip = 127.0.0.1/8 ::1 198.51.100.144/32 203.0.113.190/32
+
+[sshd]
+enabled = true
+backend = systemd
+port = ssh
+filter = sshd
+
+
+[sshd-ip6]
+enabled = true
+backend = systemd
+filter = sshd
+port = 22
+protocol = tcp
+banaction = nftables-multiport-ip6[blocktype=drop]
+
+findtime = 60m
+maxretry = 5
+bantime = 1d
+
+bantime.increment = true
+bantime.factor = 2
+bantime.maxtime = 7d
+
+ignoreip = ::1
+ignorecommand = /bin/sh -c 'case "<ip>" in *:*) exit 1 ;; *) exit 0 ;; esac'

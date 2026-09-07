@@ -1,0 +1,10 @@
+// ThreatFox RPZ — dns1 jest primary; transfer tylko do dns2 po TSIG.
+include "/etc/bind/keys/threatfox-rpz-xfr.key";
+
+zone "rpz.threatfox.abuse.ch" {
+    type primary;
+    file "/etc/bind/rpz/threatfox.rpz";
+    allow-transfer { key "threatfox-rpz-xfr"; };
+    notify yes;
+    also-notify { 198.51.100.11 key "threatfox-rpz-xfr"; };
+};

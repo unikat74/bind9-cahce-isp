@@ -1,0 +1,9 @@
+// ThreatFox RPZ — replika pobierana z dns1 przez TSIG.
+include "/etc/bind/keys/threatfox-rpz-xfr.key";
+
+zone "rpz.threatfox.abuse.ch" {
+    type secondary;
+    file "/var/cache/bind/rpz/threatfox.rpz";
+    masters { 198.51.100.10 key "threatfox-rpz-xfr"; };
+    allow-notify { 198.51.100.10; };
+};

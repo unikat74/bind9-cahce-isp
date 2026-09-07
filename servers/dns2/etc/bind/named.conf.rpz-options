@@ -1,0 +1,4 @@
+// Tryb audytu: wykrywa IOC, nie zmienia odpowiedzi klienta.
+response-policy {
+    zone "rpz.threatfox.abuse.ch" policy disabled log yes;
+};

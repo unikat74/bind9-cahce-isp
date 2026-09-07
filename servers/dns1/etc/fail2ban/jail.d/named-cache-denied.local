@@ -1,0 +1,51 @@
+[named-cache-denied-udp]
+enabled = true
+filter = named-cache-denied
+logpath = /var/log/named/security.log
+backend = auto
+banaction = nftables-multiport[blocktype=drop]
+port = 53
+protocol = udp
+maxretry = 2
+findtime = 60m
+bantime = 2d
+ignoreip = 127.0.0.1/8 198.51.96.0/21 203.0.112.0/22
+
+[named-cache-denied-tcp]
+enabled = true
+filter = named-cache-denied
+logpath = /var/log/named/security.log
+backend = auto
+banaction = nftables-multiport[blocktype=drop]
+port = 53,853,443
+protocol = tcp
+maxretry = 2
+findtime = 60m
+bantime = 2d
+ignoreip = 127.0.0.1/8 198.51.96.0/21 203.0.112.0/22
+
+[named-cache-denied-udp6]
+enabled = true
+filter = named-cache-denied-v6
+logpath = /var/log/named/security.log
+backend = auto
+banaction = nftables-multiport-ip6[blocktype=drop]
+port = 53
+protocol = udp
+maxretry = 2
+findtime = 60m
+bantime = 2d
+ignoreip = ::1 2001:db8:100::/48
+
+[named-cache-denied-tcp6]
+enabled = true
+filter = named-cache-denied-v6
+logpath = /var/log/named/security.log
+backend = auto
+banaction = nftables-multiport-ip6[blocktype=drop]
+port = 53,853,443
+protocol = tcp
+maxretry = 2
+findtime = 60m
+bantime = 2d
+ignoreip = ::1 2001:db8:100::/48
