@@ -62,7 +62,7 @@ się z danymi operatora, a SSH powinien nasłuchiwać na TCP 22.
 ```sh
 apt update
 apt full-upgrade -y
-apt install -y sudo vim curl ca-certificates git tmux jq dnsutils chrony
+apt install -y sudo vim curl ca-certificates git tmux jq dnsutils chrony python3-idna
 systemctl enable --now chrony
 timedatectl set-timezone Europe/Warsaw
 timedatectl status
@@ -291,4 +291,3 @@ nft list ruleset
 
 Z innego hosta sprawdź klasyczny DNS, DoT, DoH oraz odmowę rekurencji dla IP
 spoza ACL. Dopiero po tym serwer jest gotowy do wpisania klientom jako DNS.
-

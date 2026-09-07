@@ -8,3 +8,9 @@ zone "rpz.threatfox.abuse.ch" {
     allow-notify { DNS1_IPV4; };
 };
 
+zone "rpz.hazard.mf.gov.pl" {
+    type secondary;
+    file "/var/cache/bind/rpz/hazard.rpz";
+    masters { DNS1_IPV4 key "threatfox-rpz-xfr"; };
+    allow-notify { DNS1_IPV4; };
+};

@@ -1,7 +1,15 @@
-# Sekrety i dane generowane lokalnie
+__pycache__/
+*.py[cod]
+
+# Sekrety i certyfikaty musza pozostac poza repozytorium.
+.env
+*.env
+!*.env.example
+installer/inventory.env
 *.key
 *.pem
-*.env
-installer/inventory.env
-rpz/*.rpz
+
+# Feed jest pobierany podczas pracy i nie powinien byc wersjonowany.
+*.rpz
+*.rpz.jnl
 var/

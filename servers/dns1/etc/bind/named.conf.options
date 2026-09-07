@@ -30,6 +30,9 @@ options {
     answer-cookie yes;
     send-cookie yes;
 
+    // Zapas dla trwalych sesji DNS-over-TLS/DNS-over-HTTPS.
+    tcp-clients 500;
+
 
     // DoT: dns1.example.net, TCP/853
     listen-on port 853 tls dns1_tls {

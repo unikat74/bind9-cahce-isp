@@ -1,0 +1,40 @@
+#!/bin/sh
+set -eu
+
+: "${RENEWED_LINEAGE:?Certbot nie przekazal RENEWED_LINEAGE}"
+
+NAME="$(basename -- "$RENEWED_LINEAGE")"
+SOURCE_CERT="$RENEWED_LINEAGE/fullchain.pem"
+SOURCE_KEY="$RENEWED_LINEAGE/privkey.pem"
+TARGET_DIR="/etc/bind/tls"
+TARGET_CERT="$TARGET_DIR/$NAME.fullchain.pem"
+TARGET_KEY="$TARGET_DIR/$NAME.privkey.pem"
+
+test -s "$SOURCE_CERT"
+test -s "$SOURCE_KEY"
+/usr/bin/openssl x509 -in "$SOURCE_CERT" -noout -checkend 0 >/dev/null
+/usr/bin/openssl x509 -in "$SOURCE_CERT" -noout -checkhost "$NAME" >/dev/null
+/usr/bin/openssl pkey -in "$SOURCE_KEY" -noout -check >/dev/null 2>&1
+
+CERT_PUBLIC="$(/usr/bin/openssl x509 -in "$SOURCE_CERT" -pubkey -noout)"
+KEY_PUBLIC="$(/usr/bin/openssl pkey -in "$SOURCE_KEY" -pubout 2>/dev/null)"
+if test "$CERT_PUBLIC" != "$KEY_PUBLIC"; then
+    echo "Certyfikat i klucz prywatny nie stanowia pary" >&2
+    exit 1
+fi
+
+/usr/bin/named-checkconf
+/usr/bin/install -d -o root -g bind -m 0750 "$TARGET_DIR"
+
+TMP_CERT="$(/usr/bin/mktemp "$TARGET_DIR/.$NAME.fullchain.XXXXXX")"
+TMP_KEY="$(/usr/bin/mktemp "$TARGET_DIR/.$NAME.privkey.XXXXXX")"
+trap '/usr/bin/rm -f "$TMP_CERT" "$TMP_KEY"' EXIT HUP INT TERM
+
+/usr/bin/install -o root -g bind -m 0640 "$SOURCE_CERT" "$TMP_CERT"
+/usr/bin/install -o root -g bind -m 0640 "$SOURCE_KEY" "$TMP_KEY"
+/usr/bin/mv -f "$TMP_CERT" "$TARGET_CERT"
+/usr/bin/mv -f "$TMP_KEY" "$TARGET_KEY"
+trap - EXIT HUP INT TERM
+
+/usr/sbin/rndc reload
+/usr/bin/logger -t certbot-bind-tls "Wdrożono odnowiony certyfikat $NAME i przeładowano BIND"

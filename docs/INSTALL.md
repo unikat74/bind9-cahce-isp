@@ -39,7 +39,7 @@ Na obu serwerach:
 
 ```sh
 apt update
-apt install bind9 bind9-utils dnsutils curl certbot fail2ban nftables
+apt install bind9 bind9-utils dnsutils curl certbot fail2ban nftables python3-idna
 systemctl enable --now named
 named -v
 ```
@@ -91,6 +91,7 @@ acl "klienci_sieci" {
 Wewnątrz `options {}`:
 
 ```conf
+tcp-clients 500;
 directory "/var/cache/bind";
 allow-query { any; };
 recursion yes;
@@ -185,25 +186,28 @@ Na dns2 zamień `dns1` na `dns2`.
 
 ### 5.4 Automatyczna aktualizacja po renew
 
-Na dns1 utwórz `/etc/letsencrypt/renewal-hooks/deploy/bind-tls`:
+Na obu serwerach zainstaluj wspólny deploy-hook z projektu:
 
 ```sh
-#!/bin/sh
-set -eu
-NAME="dns1.example.net"
-install -o root -g bind -m 640 "/etc/letsencrypt/live/$NAME/fullchain.pem" "/etc/bind/tls/$NAME.fullchain.pem"
-install -o root -g bind -m 640 "/etc/letsencrypt/live/$NAME/privkey.pem" "/etc/bind/tls/$NAME.privkey.pem"
-/usr/bin/named-checkconf
-/usr/sbin/rndc reload
+install -o root -g root -m 0750 scripts/deploy-bind-tls \
+  /etc/letsencrypt/renewal-hooks/deploy/bind-tls
+systemctl enable --now certbot.timer
 ```
+
+Hook korzysta z `RENEWED_LINEAGE` przekazanego przez Certbota, dlatego ten sam
+plik działa dla `dns1` i `dns2`. Przed podmianą sprawdza ważność i nazwę
+certyfikatu, klucz prywatny, zgodność pary certyfikat–klucz oraz konfigurację
+BIND-a. Pliki
+są przygotowywane w `/etc/bind/tls` i podmieniane przez `mv`, po czym wykonywany
+jest `rndc reload`.
+
+Testuj również deploy-hook; zwykłe `--dry-run` domyślnie go nie uruchamia:
 
 ```sh
-chmod 750 /etc/letsencrypt/renewal-hooks/deploy/bind-tls
-certbot renew --dry-run
-systemctl list-timers | grep certbot
+certbot renew --dry-run --run-deploy-hooks
+systemctl list-timers --all certbot.timer
+journalctl -t certbot-bind-tls -n 20 --no-pager
 ```
-
-Na dns2 ustaw w hooku `NAME="dns2.example.net"`.
 
 ## 6. DoT i DoH
 

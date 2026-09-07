@@ -1,0 +1,15 @@
+[Unit]
+Description=Aktualizacja rejestru hazardowego MF w strefie RPZ
+After=network-online.target bind9.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/flock --nonblock /run/hazard-rpz/update.lock /usr/local/sbin/update-hazard-rpz --redirect-ip 145.237.235.240 --reload
+User=root
+Group=root
+RuntimeDirectory=hazard-rpz
+PrivateTmp=yes
+ProtectHome=yes
+ProtectSystem=strict
+ReadWritePaths=/etc/bind/rpz /run/hazard-rpz

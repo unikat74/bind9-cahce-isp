@@ -6,4 +6,4 @@ $TTL    7200
                         2419200         ; Expire
                          604800 )       ; Negative Cache TTL
 @       IN      NS      localhost.
-@       IN      A       192.0.2.254
+@       IN      A       145.237.235.240

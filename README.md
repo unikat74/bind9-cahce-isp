@@ -2,7 +2,13 @@
 
 Konfiguracja referencyjna dla pary BIND 9 na Debianie: rekurencyjny resolver/cache,
 DNS-over-TLS, DNS-over-HTTPS, ograniczenie otwartego resolvera, Fail2Ban oraz
-ThreatFox RPZ w trybie audytu.
+ThreatFox RPZ w trybie audytu oraz migrację rejestru hazardowego MF do RPZ.
+
+Obsługa rejestru hazardowego jest nową implementacją funkcji używanego wcześniej
+skryptu `hazardBind v0.7 [2022-02-18]`, którego nagłówek wskazuje
+[www.kazuko.pl](https://www.kazuko.pl/). Powody migracji oraz wpływ na wydajność
+i bezpieczeństwo opisuje dokument `docs/HAZARD-RPZ-MIGRATION.md`.
+Publiczny adres przekierowania rejestru hazardowego to `145.237.235.240`.
 
 ## Architektura
 
@@ -20,12 +26,14 @@ zabezpieczonym transferze TSIG.
 - `bind/` — szablony konfiguracji BIND;
 - `servers/` — snapshoty faktycznych konfiguracji dns1 i dns2, z zachowaniem
   ścieżek systemowych i bez sekretów;
-- `scripts/` — aktualizacja ThreatFox RPZ;
-- `systemd/` — codzienne uruchamianie aktualizacji na dns1;
+- `scripts/` — aktualizacja ThreatFox i rejestru hazardowego RPZ;
+- `systemd/` — cykliczne uruchamianie aktualizacji na dns1;
 - `docs/` — wdrożenie i testy.
 
 Pierwsze wdrożenie zaczynaj od
 [`docs/FRESH-DEBIAN-13.md`](docs/FRESH-DEBIAN-13.md), a następnie korzystaj z
 pełnej instrukcji komponentów w [`docs/INSTALL.md`](docs/INSTALL.md).
+Migrację istniejących stref hazardowych prowadzi osobna instrukcja
+[`docs/HAZARD-RPZ-MIGRATION.md`](docs/HAZARD-RPZ-MIGRATION.md).
 
 Nigdy nie commituj API key, TSIG secret, certyfikatów TLS ani pobranego feedu RPZ.

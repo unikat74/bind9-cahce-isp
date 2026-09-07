@@ -8,3 +8,12 @@ zone "rpz.threatfox.abuse.ch" {
     notify yes;
     also-notify { 198.51.100.11 key "threatfox-rpz-xfr"; };
 };
+
+zone "rpz.hazard.mf.gov.pl" {
+    type primary;
+    file "/etc/bind/rpz/hazard.rpz";
+    check-names ignore;
+    allow-transfer { key "threatfox-rpz-xfr"; };
+    notify yes;
+    also-notify { 198.51.100.11 key "threatfox-rpz-xfr"; };
+};

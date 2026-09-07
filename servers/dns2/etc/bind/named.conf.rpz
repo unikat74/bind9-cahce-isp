@@ -7,3 +7,10 @@ zone "rpz.threatfox.abuse.ch" {
     masters { 198.51.100.10 key "threatfox-rpz-xfr"; };
     allow-notify { 198.51.100.10; };
 };
+
+zone "rpz.hazard.mf.gov.pl" {
+    type secondary;
+    file "/var/cache/bind/rpz/hazard.rpz";
+    masters { 198.51.100.10 key "threatfox-rpz-xfr"; };
+    allow-notify { 198.51.100.10; };
+};
