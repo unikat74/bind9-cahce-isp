@@ -3,9 +3,18 @@
 ## Stan wdrożenia
 
 Migracja została wdrożona produkcyjnie 7 września 2026 roku na `dns1` i `dns2`.
-Stare pliki pozostają na serwerach jako materiał do rollbacku, ale
-`named.conf.hazard-redirect` nie jest już dołączany do aktywnej konfiguracji, a
-cron `hazardBind` ma nazwę `hazardBind.disabled`.
+Stare pliki zostały usunięte z aktywnych katalogów po testach obu serwerów.
+Kopie potrzebne do awaryjnego odtworzenia statycznej konfiguracji znajdują się
+na każdym serwerze w `/root/legacy-hazardbind-20260907.tar.gz`.
+
+Sumy SHA-256 archiwów produkcyjnych:
+
+- dns1: `c7796d4f5fbd54454d996c2c289d5b0940b9962b2c6007c388117b1786f167ee`;
+- dns2: `8cc9f5063d160be26ccde7c4f76c55edd002041130f42033e7e0b01495708c44`.
+
+Archiwa zawierają dawne pliki konfiguracyjne i kopie sprzed migracji. Skrypt
+`/opt/hazardBind.pl` oraz jego cron były już nieobecne podczas sprzątania, więc
+archiwa ich nie zawierają.
 
 `dns1` pobiera rejestr co godzinę przez `hazard-rpz.timer`, buduje primary
 `rpz.hazard.mf.gov.pl`, a `dns2` odbiera tę strefę jako secondary przez transfer
@@ -147,9 +156,20 @@ zwykłe rozwiązywanie nazw działało prawidłowo.
 
 ## Rollback
 
-Na każdym serwerze przywróć kopie utworzone przed migracją:
+Rollback jest procedurą awaryjną i przywraca statyczny stan sprzed migracji,
+ale nie przywraca automatycznej aktualizacji przez stary skrypt. Najpierw
+sprawdź i rozpakuj właściwe archiwum na każdym serwerze:
 
 ```bash
+sha256sum /root/legacy-hazardbind-20260907.tar.gz
+tar -tzf /root/legacy-hazardbind-20260907.tar.gz
+tar -C / -xzf /root/legacy-hazardbind-20260907.tar.gz
+```
+
+Następnie wyłącz aktualizację RPZ i przywróć kopie konfiguracji:
+
+```bash
+systemctl disable --now hazard-rpz.timer
 cp -a /etc/bind/named.conf.pre-hazard-rpz /etc/bind/named.conf
 cp -a /etc/bind/named.conf.rpz-options.pre-hazard-rpz \
   /etc/bind/named.conf.rpz-options
@@ -158,11 +178,7 @@ named-checkconf
 rndc reconfig
 ```
 
-Na `dns1` wyłącz również nowy timer i przywróć cron:
-
-```bash
-systemctl disable --now hazard-rpz.timer
-mv /etc/cron.d/hazardBind.disabled /etc/cron.d/hazardBind
-```
-
-Na `dns2` wystarczy ponownie nazwać `hazardBind.disabled` na `hazardBind`.
+Po awaryjnym przywróceniu trzeba osobno zaprojektować mechanizm aktualizacji;
+nie zaleca się ponownego uruchamiania starego `hazardBind.pl` z wyłączoną
+weryfikacją TLS. Preferowany powrót do normalnej pracy to naprawa przyczyny i
+ponowne włączenie `hazard-rpz.timer` na dns1.

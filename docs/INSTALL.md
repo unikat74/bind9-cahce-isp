@@ -279,7 +279,7 @@ tail -f /var/log/named/security.log
 journalctl -u named -f
 ```
 
-## 8. ThreatFox na dns1
+## 8. RPZ ThreatFox i hazard na dns1
 
 Utwórz Auth-Key ThreatFox, a następnie:
 
@@ -292,15 +292,7 @@ nano /etc/threatfox.env
 THREATFOX_AUTH_KEY='WARTOŚĆ_TYLKO_NA_SERWERZE'
 ```
 
-Nie commituj tego pliku. Przygotuj zmienne projektu i instalator:
-
-```sh
-cp installer/inventory.env.example installer/inventory.env
-nano installer/inventory.env
-./installer/bootstrap-threatfox-rpz.sh primary
-```
-
-Wygeneruj TSIG:
+Nie commituj tego pliku. Wygeneruj klucz TSIG do transferu obu stref:
 
 ```sh
 install -d -o root -g bind -m 750 /etc/bind/keys
@@ -308,6 +300,20 @@ tsig-keygen -a hmac-sha256 threatfox-rpz-xfr > /etc/bind/keys/threatfox-rpz-xfr.
 chown root:bind /etc/bind/keys/threatfox-rpz-xfr.key
 chmod 640 /etc/bind/keys/threatfox-rpz-xfr.key
 ```
+
+Skopiuj projekt na serwer, przygotuj jego zmienne i uruchom wspólny instalator:
+
+```sh
+cp installer/inventory.env.example installer/inventory.env
+nano installer/inventory.env
+./installer/bootstrap-rpz.sh primary
+```
+
+Instalator pobiera pierwszą strefę ThreatFox bez próby przeładowania jeszcze
+nieznanej strefy, pobiera rejestr MF, instaluje generatory i jednostki systemd
+oraz tworzy `named.conf.rpz` i `named.conf.rpz-options`. Nie włącza timerów przed
+walidacją całej konfiguracji. Starsza nazwa `bootstrap-threatfox-rpz.sh`
+pozostaje jedynie zgodnym wrapperem.
 
 W `named.conf.local` dodaj:
 
@@ -321,27 +327,28 @@ Wewnątrz `options {}` dodaj:
 include "/etc/bind/named.conf.rpz-options";
 ```
 
-Pobierz i aktywuj:
+Aktywuj i sprawdź obie strefy:
 
 ```sh
-/usr/local/sbin/update-threatfox-rpz
 named-checkconf && systemctl reload named
 rndc zonestatus rpz.threatfox.abuse.ch
+rndc zonestatus rpz.hazard.mf.gov.pl
 systemctl daemon-reload
-systemctl enable --now threatfox-rpz.timer
-systemctl list-timers threatfox-rpz.timer
+systemctl enable --now threatfox-rpz.timer hazard-rpz.timer
+systemctl list-timers threatfox-rpz.timer hazard-rpz.timer
 ```
 
-## 9. ThreatFox na dns2
+## 9. RPZ ThreatFox i hazard na dns2
 
 Skopiuj ten sam TSIG bezpiecznym kanałem do
 `/etc/bind/keys/threatfox-rpz-xfr.key` na dns2 i ustaw `root:bind`, `0640`.
+Nie twórz osobnego klucza — musi to być identyczny sekret na obu końcach.
 Następnie:
 
 ```sh
 cp installer/inventory.env.example installer/inventory.env
 nano installer/inventory.env
-./installer/bootstrap-threatfox-rpz.sh secondary
+./installer/bootstrap-rpz.sh secondary
 ```
 
 Dodaj oba include'y i kategorię `rpz` jak na dns1, potem:
@@ -349,12 +356,16 @@ Dodaj oba include'y i kategorię `rpz` jak na dns1, potem:
 ```sh
 named-checkconf && systemctl reload named
 rndc zonestatus rpz.threatfox.abuse.ch
+rndc zonestatus rpz.hazard.mf.gov.pl
 journalctl -u named --since '5 minutes ago' | grep -E 'Transfer|TSIG|rpz'
 ```
 
 Oczekuj `Transfer status: success` i `TSIG threatfox-rpz-xfr`.
 
-## 10. Test audytu RPZ
+Na dns2 nie uruchamiaj timerów aktualizacyjnych. Obie strefy są secondary i
+aktualizują się przez NOTIFY oraz transfer ze stref primary na dns1.
+
+## 10. Test polityk RPZ
 
 `policy disabled log yes` wykrywa IOC, ale nie blokuje. Wykonaj zapytanie do
 domeny obecnej w aktualnym feedzie i sprawdź:
@@ -372,6 +383,17 @@ disabled rpz QNAME NXDOMAIN rewrite ... via ...rpz.threatfox.abuse.ch
 Normalna odpowiedź A jest prawidłowa w audycie. Zmiana na `policy given`
 włącza realne akcje zapisane w feedzie i powinna nastąpić dopiero po analizie.
 
+Hazard działa w trybie blokowania (`policy given`). Wybierz aktualną domenę z
+pliku strefy na dns1 i sprawdź ją oraz losową subdomenę:
+
+```sh
+dig @127.0.0.1 DOMENA_Z_REJESTRU A +short
+dig @127.0.0.1 test-rpz.DOMENA_Z_REJESTRU A
+```
+
+Pierwsze zapytanie powinno zwrócić publiczny adres przekierowania zapisany w
+generatorze (`145.237.235.240`), a drugie `NXDOMAIN`. Test powtórz na dns2.
+
 ## 11. Fail2Ban
 
 Pliki przykładowe są w `servers/dns*/etc/fail2ban/`. Najpierw wpisz własne
@@ -386,12 +408,12 @@ nft list ruleset
 
 Dla DNS oczekuj UDP 53 oraz TCP 53, 443, 853, osobno dla IPv4 i IPv6.
 
-## 12. Hazard
+## 12. Rejestr hazardowy
 
-Snapshot zawiera obecny model wielu lokalnych stref. Zmień dokumentacyjny
-adres w `db.hazard-redirect` na właściwy adres strony blokady. Generowany plik
-`named.conf.hazard-redirect` zawsze sprawdzaj przez `named-checkconf` przed
-reloadem.
+Rejestr hazardowy jest obsługiwany wyłącznie jako jedna strefa RPZ. Nie używaj
+starego `hazardBind.pl`, `db.hazard-redirect`, `named.conf.hazard-redirect` ani
+crona `hazardBind`. Generator, walidacja IDN, automatyzacja, wpływ na wydajność
+i procedura rollbacku są opisane w `docs/HAZARD-RPZ-MIGRATION.md`.
 
 ## 13. Kontrola końcowa
 
@@ -400,6 +422,8 @@ Na obu serwerach:
 ```sh
 named-checkconf
 rndc status
+rndc zonestatus rpz.threatfox.abuse.ch
+rndc zonestatus rpz.hazard.mf.gov.pl
 free -h
 ps -C named -o pid,%cpu,%mem,rss,vsz,cmd
 dig @127.0.0.1 google.com A
@@ -407,10 +431,12 @@ ss -lntup | grep -E ':(53|443|853)\b'
 fail2ban-client status
 ```
 
-Na dns2 dodatkowo:
+Na dns1 dodatkowo:
 
 ```sh
-rndc zonestatus rpz.threatfox.abuse.ch
+systemctl is-enabled threatfox-rpz.timer hazard-rpz.timer certbot.timer
+systemctl list-timers threatfox-rpz.timer hazard-rpz.timer certbot.timer
+journalctl -u threatfox-rpz.service -u hazard-rpz.service --since today
 ```
 
 Po każdej zmianie używaj:

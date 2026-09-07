@@ -3,6 +3,7 @@ set -eu
 
 . /etc/threatfox.env
 : "${THREATFOX_AUTH_KEY:?Brak klucza w /etc/threatfox.env}"
+: "${RELOAD:=yes}"
 
 TARGET="/etc/bind/rpz/threatfox.rpz"
 TMP="$(mktemp /etc/bind/rpz/threatfox.rpz.new.XXXXXX)"
@@ -15,5 +16,6 @@ grep -q 'SOA' "$TMP"
 chown root:bind "$TMP"
 chmod 640 "$TMP"
 mv "$TMP" "$TARGET"
-/usr/sbin/rndc reload rpz.threatfox.abuse.ch
-
+if [ "$RELOAD" = yes ]; then
+  /usr/sbin/rndc reload rpz.threatfox.abuse.ch
+fi

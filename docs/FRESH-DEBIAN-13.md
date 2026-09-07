@@ -244,11 +244,13 @@ dig -4 @dns1.example.net google.com A +https +tls-ca +tls-hostname=dns1.example.
 dig -6 @dns1.example.net google.com A +https +tls-ca +tls-hostname=dns1.example.net
 ```
 
-## 10. ThreatFox i para dns1/dns2
+## 10. ThreatFox, hazard i para dns1/dns2
 
-Najpierw uruchom ThreatFox primary na dns1. Potwierdź `rndc zonestatus`, a
-dopiero potem zainstaluj secondary na dns2. TSIG przenoś wyłącznie z
-potwierdzonymi odciskami SSH obu serwerów.
+Najpierw uruchom instalator obu RPZ w roli primary na dns1. Potwierdź
+`rndc zonestatus` dla ThreatFox i hazardu, a dopiero potem uruchom instalator w
+roli secondary na dns2. TSIG przenoś wyłącznie z potwierdzonymi odciskami SSH
+obu serwerów. Dokładna kolejność znajduje się w rozdziałach 8–10
+`docs/INSTALL.md`.
 
 Po stronie dns2 oczekuj:
 
@@ -257,7 +259,9 @@ Transfer status: success
 TSIG threatfox-rpz-xfr
 ```
 
-Zostaw `policy disabled log yes` przez okres obserwacji.
+Zostaw `policy disabled log yes` dla ThreatFox przez okres obserwacji. Rejestr
+hazardowy używa `policy given` i aktywnie zwraca adres przekierowania lub
+NXDOMAIN zgodnie z regułami strefy.
 
 ## 11. Firewall — wdrażanie bez utraty SSH
 
@@ -279,6 +283,7 @@ Minimalne usługi przychodzące:
 named-checkconf
 rndc status
 rndc zonestatus rpz.threatfox.abuse.ch
+rndc zonestatus rpz.hazard.mf.gov.pl
 systemctl --failed
 systemctl status named fail2ban chrony --no-pager
 timedatectl status

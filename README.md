@@ -14,12 +14,13 @@ Publiczny adres przekierowania rejestru hazardowego to `145.237.235.240`.
 
 ```text
 klienci ── DNS/DoT/DoH ── dns1 (primary RPZ) ── TSIG/AXFR ── dns2 (secondary RPZ)
-                               │
-                               └── ThreatFox API
+                               ├── ThreatFox API
+                               └── rejestr hazardowy MF
 ```
 
-`dns1` jest jedyną maszyną z kluczem ThreatFox. `dns2` odbiera strefę RPZ po
-zabezpieczonym transferze TSIG.
+`dns1` jest jedyną maszyną z kluczem ThreatFox i jedyną pobierającą oba źródła.
+`dns2` odbiera obie strefy RPZ po zabezpieczonym transferze TSIG. Stary model
+dziesiątek tysięcy stref hazardowych został usunięty z aktywnej konfiguracji.
 
 ## Zawartość
 
@@ -28,6 +29,8 @@ zabezpieczonym transferze TSIG.
   ścieżek systemowych i bez sekretów;
 - `scripts/` — aktualizacja ThreatFox i rejestru hazardowego RPZ;
 - `systemd/` — cykliczne uruchamianie aktualizacji na dns1;
+- `installer/bootstrap-rpz.sh` — przygotowanie obu RPZ dla roli primary lub
+  secondary;
 - `docs/` — wdrożenie i testy.
 
 Pierwsze wdrożenie zaczynaj od

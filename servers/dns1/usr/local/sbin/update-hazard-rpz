@@ -1,0 +1,220 @@
+#!/usr/bin/python3
+"""Pobiera rejestr MF i bezpiecznie buduje pojedyncza strefe RPZ.
+
+Nowa implementacja funkcji realizowanej wcześniej przez hazardBind v0.7
+[2022-02-18], którego naglowek wskazuje www.kazuko.pl. Kod nie jest kopia
+oryginalnego skryptu.
+"""
+
+from __future__ import annotations
+
+import argparse
+import grp
+import hashlib
+import ipaddress
+import os
+import re
+import shutil
+import subprocess
+import sys
+import tempfile
+import time
+import urllib.request
+import xml.etree.ElementTree as ET
+from pathlib import Path
+
+import idna
+
+
+DEFAULT_URL = "https://hazard.mf.gov.pl/api/Register"
+DEFAULT_ZONE = "rpz.hazard.mf.gov.pl"
+DEFAULT_OUTPUT = Path("/etc/bind/rpz/hazard.rpz")
+DEFAULT_REDIRECT = "145.237.235.240"
+DOMAIN_RE = re.compile(r"^[a-z0-9_-]+(?:\.[a-z0-9_-]+)+$")
+SOA_SERIAL_RE = re.compile(r"^@\s+IN\s+SOA\s+\S+\s+\S+\s+\(\s*(\d+)")
+
+
+def arguments() -> argparse.Namespace:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--url", default=DEFAULT_URL)
+    parser.add_argument("--zone", default=DEFAULT_ZONE)
+    parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
+    parser.add_argument("--redirect-ip", default=DEFAULT_REDIRECT)
+    parser.add_argument("--group", default="bind", help="grupa pliku wynikowego")
+    parser.add_argument("--minimum-entries", type=int, default=10_000)
+    parser.add_argument(
+        "--subdomains",
+        choices=("nxdomain", "redirect", "allow"),
+        default="nxdomain",
+        help="nxdomain zachowuje zachowanie dawnych stref; allow dotyczy tylko nazw z listy",
+    )
+    parser.add_argument("--reload", action="store_true", help="wykonaj rndc reload strefy po zmianie")
+    return parser.parse_args()
+
+
+def normalize_domain(value: str) -> str:
+    domain = value.strip().rstrip(".")
+    labels = []
+    for label in domain.split("."):
+        # IDNA2008 + UTS #46 odpowiada wspolczesnym przegladarkom. Rejestr MF
+        # zawiera tez historyczne, niestandardowe etykiety ASCII z "_";
+        # zachowujemy je tak jak poprzedni hazardBind.pl.
+        if label.isascii() and "_" in label:
+            ascii_label = label.lower()
+        else:
+            ascii_label = idna.encode(label, uts46=True, std3_rules=True).decode("ascii").lower()
+        labels.append(ascii_label)
+    domain = ".".join(labels)
+    if len(domain) > 253 or not DOMAIN_RE.fullmatch(domain):
+        raise ValueError(f"nieprawidlowa domena: {value!r}")
+    if any(len(label) > 63 or label.startswith("-") or label.endswith("-") for label in labels):
+        raise ValueError(f"nieprawidlowa etykieta DNS: {value!r}")
+    return domain
+
+
+def download(url: str) -> bytes:
+    request = urllib.request.Request(url, headers={"User-Agent": "bind9-hazard-rpz/1.0"})
+    with urllib.request.urlopen(request, timeout=60) as response:
+        if response.status != 200:
+            raise RuntimeError(f"HTTP {response.status} podczas pobierania rejestru")
+        return response.read()
+
+
+def active_domains(xml_data: bytes) -> tuple[list[str], int]:
+    root = ET.fromstring(xml_data)
+    newest: dict[str, bool] = {}
+    rejected = 0
+
+    # Plik jest ulozony od najnowszych wpisow. Pierwszy wpis domeny wygrywa,
+    # tak samo jak w dotychczasowym hazardBind.pl.
+    for entry in root.findall("{*}PozycjaRejestru"):
+        domain_element = entry.find("{*}AdresDomeny")
+        if domain_element is None or not domain_element.text:
+            rejected += 1
+            continue
+        try:
+            domain = normalize_domain(domain_element.text)
+        except (UnicodeError, ValueError):
+            rejected += 1
+            continue
+        if domain in newest:
+            continue
+        newest[domain] = entry.find("{*}DataWykreslenia") is None
+
+    return sorted(domain for domain, active in newest.items() if active), rejected
+
+
+def records(domains: list[str], redirect_ip: str, subdomains: str) -> str:
+    lines = []
+    for domain in domains:
+        # W RPZ nazwa jest wzgledna wobec origin strefy polityki.
+        lines.append(f"{domain} 300 IN A {redirect_ip}")
+        if subdomains == "nxdomain":
+            lines.append(f"*.{domain} 300 IN CNAME .")
+        elif subdomains == "redirect":
+            lines.append(f"*.{domain} 300 IN A {redirect_ip}")
+    return "\n".join(lines) + "\n"
+
+
+def existing_hash(path: Path) -> str | None:
+    if not path.exists():
+        return None
+    with path.open(encoding="ascii", errors="replace") as handle:
+        for _ in range(12):
+            line = handle.readline()
+            if line.startswith("; Content SHA256: "):
+                return line.removeprefix("; Content SHA256: ").strip()
+    return None
+
+
+def existing_serial(path: Path) -> int:
+    if not path.exists():
+        return 0
+    with path.open(encoding="ascii", errors="replace") as handle:
+        for _ in range(12):
+            match = SOA_SERIAL_RE.match(handle.readline())
+            if match:
+                return int(match.group(1))
+    return 0
+
+
+def zone_text(
+    source_url: str,
+    body: str,
+    content_hash: str,
+    count: int,
+    rejected: int,
+    serial: int,
+) -> str:
+    return (
+        "$TTL 300\n"
+        f"; Generated automatically from {source_url}\n"
+        f"; Content SHA256: {content_hash}\n"
+        f"; Active domains: {count}; rejected entries: {rejected}\n"
+        f"@ IN SOA localhost. root.localhost. ( {serial} 300 60 604800 300 )\n"
+        "  IN NS localhost.\n"
+        + body
+    )
+
+
+def validate(zone: str, path: Path) -> None:
+    checker = shutil.which("named-checkzone")
+    if checker is None:
+        raise RuntimeError("brak named-checkzone; zainstaluj pakiet bind9-utils")
+    subprocess.run([checker, "-q", "-k", "ignore", zone, str(path)], check=True)
+
+
+def install_atomic(path: Path, text: str, zone: str, group: str) -> None:
+    path.parent.mkdir(mode=0o2750, parents=True, exist_ok=True)
+    fd, temporary_name = tempfile.mkstemp(prefix=f".{path.name}.", dir=path.parent)
+    temporary = Path(temporary_name)
+    try:
+        with os.fdopen(fd, "w", encoding="ascii", newline="\n") as handle:
+            handle.write(text)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.chmod(temporary, 0o640)
+        os.chown(temporary, 0, grp.getgrnam(group).gr_gid)
+        validate(zone, temporary)
+        os.replace(temporary, path)
+    finally:
+        temporary.unlink(missing_ok=True)
+
+
+def main() -> int:
+    args = arguments()
+    ipaddress.IPv4Address(args.redirect_ip)
+    xml_data = download(args.url)
+    domains, rejected = active_domains(xml_data)
+    if len(domains) < args.minimum_entries:
+        raise RuntimeError(
+            f"rejestr ma tylko {len(domains)} aktywnych domen; minimum to {args.minimum_entries}"
+        )
+
+    body = records(domains, args.redirect_ip, args.subdomains)
+    digest = hashlib.sha256(
+        (args.zone + "\0" + args.redirect_ip + "\0" + args.subdomains + "\0" + body).encode("ascii")
+    ).hexdigest()
+    if existing_hash(args.output) == digest:
+        print(f"bez zmian: {len(domains)} domen")
+        return 0
+
+    serial = max(int(time.time()), existing_serial(args.output) + 1)
+    install_atomic(
+        args.output,
+        zone_text(args.url, body, digest, len(domains), rejected, serial),
+        args.zone,
+        args.group,
+    )
+    print(f"zapisano {args.output}: {len(domains)} domen, odrzucono {rejected}")
+    if args.reload:
+        subprocess.run(["rndc", "reload", args.zone], check=True)
+    return 0
+
+
+if __name__ == "__main__":
+    try:
+        raise SystemExit(main())
+    except Exception as error:
+        print(f"BLAD: {error}", file=sys.stderr)
+        raise SystemExit(1)

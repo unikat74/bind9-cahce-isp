@@ -1,9 +1,15 @@
 [Unit]
-Description=ThreatFox RPZ update
+Description=Aktualizacja ThreatFox RPZ
+After=network-online.target bind9.service
 Wants=network-online.target
-After=network-online.target
 
 [Service]
 Type=oneshot
-ExecStart=/usr/local/sbin/update-threatfox-rpz
-
+ExecStart=/usr/bin/flock --nonblock /run/threatfox-rpz/update.lock /usr/local/sbin/update-threatfox-rpz
+User=root
+Group=root
+RuntimeDirectory=threatfox-rpz
+PrivateTmp=yes
+ProtectHome=yes
+ProtectSystem=strict
+ReadWritePaths=/etc/bind/rpz /run/threatfox-rpz
