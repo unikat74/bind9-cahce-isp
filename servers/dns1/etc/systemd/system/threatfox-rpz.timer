@@ -9,4 +9,3 @@ Unit=threatfox-rpz.service
 
 [Install]
 WantedBy=timers.target
-

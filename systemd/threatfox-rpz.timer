@@ -1,5 +1,5 @@
 [Unit]
-Description=Daily ThreatFox RPZ update
+Description=Codzienna aktualizacja ThreatFox RPZ
 
 [Timer]
 OnCalendar=*-*-* 03:17:00
@@ -9,4 +9,3 @@ Unit=threatfox-rpz.service
 
 [Install]
 WantedBy=timers.target
-

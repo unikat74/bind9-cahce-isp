@@ -1,8 +1,10 @@
 # BIND 9 cache resolver dla ISP
 
+**Status: produkcja odebrana, zakres podstawowy zakończony 7 września 2026.**
+
 Konfiguracja referencyjna dla pary BIND 9 na Debianie: rekurencyjny resolver/cache,
 DNS-over-TLS, DNS-over-HTTPS, ograniczenie otwartego resolvera, Fail2Ban oraz
-ThreatFox RPZ w trybie audytu oraz migrację rejestru hazardowego MF do RPZ.
+ThreatFox RPZ w trybie audytu i rejestr hazardowy MF w aktywnej strefie RPZ.
 
 Obsługa rejestru hazardowego jest nową implementacją funkcji używanego wcześniej
 skryptu `hazardBind v0.7 [2022-02-18]`, którego nagłówek wskazuje
@@ -22,7 +24,14 @@ klienci ── DNS/DoT/DoH ── dns1 (primary RPZ) ── TSIG/AXFR ── dns
 `dns2` odbiera obie strefy RPZ po zabezpieczonym transferze TSIG. Stary model
 dziesiątek tysięcy stref hazardowych został usunięty z aktywnej konfiguracji.
 
-## Zawartość
+## Dokumentacja
+
+Punktem wejścia jest [`docs/README.md`](docs/README.md). Zawiera uporządkowaną
+nawigację dla instalacji, eksploatacji, diagnostyki, kompatybilności i
+rollbacku. Końcowy stan produkcji oraz kryteria ponownego otwarcia opisuje
+[`docs/PROJECT-STATUS.md`](docs/PROJECT-STATUS.md).
+
+## Zawartość repozytorium
 
 - `bind/` — szablony konfiguracji BIND;
 - `servers/` — snapshoty faktycznych konfiguracji dns1 i dns2, z zachowaniem
@@ -33,15 +42,7 @@ dziesiątek tysięcy stref hazardowych został usunięty z aktywnej konfiguracji
   secondary;
 - `docs/` — wdrożenie i testy.
 
-Diagnostykę obciążenia, wartości domyślne limitów i bezpieczne skalowanie opisuje
-[`docs/DIAGNOSTICS-CAPACITY.md`](docs/DIAGNOSTICS-CAPACITY.md).
-Zgodność klientów, ograniczenia RouterOS 6.x oraz niewspieraną warstwę zgodności
-opisuje [`docs/CLIENT-COMPATIBILITY.md`](docs/CLIENT-COMPATIBILITY.md).
-
-Pierwsze wdrożenie zaczynaj od
-[`docs/FRESH-DEBIAN-13.md`](docs/FRESH-DEBIAN-13.md), a następnie korzystaj z
-pełnej instrukcji komponentów w [`docs/INSTALL.md`](docs/INSTALL.md).
-Migrację istniejących stref hazardowych prowadzi osobna instrukcja
-[`docs/HAZARD-RPZ-MIGRATION.md`](docs/HAZARD-RPZ-MIGRATION.md).
+Pierwsze wdrożenie zaczynaj od dokumentu wskazanego w indeksie jako „Czysty
+Debian 13”. Nie kopiuj bezpośrednio snapshotów `servers/` na inny system.
 
 Nigdy nie commituj API key, TSIG secret, certyfikatów TLS ani pobranego feedu RPZ.

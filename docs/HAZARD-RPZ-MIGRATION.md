@@ -52,9 +52,11 @@ oraz NXDOMAIN dla jej pozostałych subdomen. Najważniejsze oczekiwane korzyści
 
 RPZ dodaje wyszukanie polityki podczas zapytania rekurencyjnego, więc nie jest
 całkowicie pozbawione kosztu. Dla tej instalacji powinno być jednak wyraźnie
-lżejsze operacyjnie od utrzymywania około 57 tysięcy osobnych stref. Faktyczne
-zużycie RAM, czas przeładowania i opóźnienia sprawdzimy przed i po przełączeniu;
-nie zakładamy z góry konkretnego procentu poprawy.
+lżejsze operacyjnie od utrzymywania około 57 tysięcy osobnych stref. Po
+przełączeniu liczba stref BIND spadła do 25 na każdym resolverze, a procesy po
+kontrolowanym restarcie zajmowały około 200–280 MB RAM. DNS, DoT, DoH i
+odpowiedzi RPZ przeszły testy odbiorcze. Nie przypisujemy całej różnicy pamięci
+wyłącznie RPZ, ponieważ restart usunął także wcześniejszy stan procesu.
 
 ## Wpływ na bezpieczeństwo
 
