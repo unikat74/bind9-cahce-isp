@@ -24,6 +24,8 @@ command -v named-checkzone >/dev/null 2>&1 || {
   exit 1
 }
 
+install -m 0755 "$ROOT/scripts/check-bind-capacity" /usr/local/sbin/check-bind-capacity
+
 install -d -o root -g bind -m 0750 /etc/bind/keys
 [ -s /etc/bind/keys/threatfox-rpz-xfr.key ] || {
   echo "Brak /etc/bind/keys/threatfox-rpz-xfr.key." >&2

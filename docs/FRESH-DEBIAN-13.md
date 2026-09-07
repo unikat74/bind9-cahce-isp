@@ -292,7 +292,9 @@ df -h
 ps -C named -o pid,%cpu,%mem,rss,vsz,cmd
 fail2ban-client status
 nft list ruleset
+/usr/local/sbin/check-bind-capacity
 ```
 
 Z innego hosta sprawdź klasyczny DNS, DoT, DoH oraz odmowę rekurencji dla IP
 spoza ACL. Dopiero po tym serwer jest gotowy do wpisania klientom jako DNS.
+Progi alarmowe i strojenie limitów opisuje `docs/DIAGNOSTICS-CAPACITY.md`.

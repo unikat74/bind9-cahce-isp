@@ -33,6 +33,9 @@ dziesiątek tysięcy stref hazardowych został usunięty z aktywnej konfiguracji
   secondary;
 - `docs/` — wdrożenie i testy.
 
+Diagnostykę obciążenia, wartości domyślne limitów i bezpieczne skalowanie opisuje
+[`docs/DIAGNOSTICS-CAPACITY.md`](docs/DIAGNOSTICS-CAPACITY.md).
+
 Pierwsze wdrożenie zaczynaj od
 [`docs/FRESH-DEBIAN-13.md`](docs/FRESH-DEBIAN-13.md), a następnie korzystaj z
 pełnej instrukcji komponentów w [`docs/INSTALL.md`](docs/INSTALL.md).

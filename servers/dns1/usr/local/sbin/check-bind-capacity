@@ -1,0 +1,54 @@
+#!/bin/sh
+# Szybka, tylko do odczytu diagnostyka limitów i zasobów BIND 9.
+set -u
+
+SINCE=${SINCE:-15 minutes ago}
+SERVICE=${SERVICE:-named}
+
+echo "== BIND / rndc status =="
+/usr/sbin/rndc status || exit 1
+
+echo
+echo "== Zasoby procesu =="
+main_pid=$(systemctl show "$SERVICE" --property=MainPID --value)
+systemctl show "$SERVICE" \
+  --property=MemoryCurrent \
+  --property=TasksCurrent \
+  --property=LimitNOFILE
+if [ -n "$main_pid" ] && [ "$main_pid" != 0 ] && [ -r "/proc/$main_pid/limits" ]; then
+  sed -n '/Max open files/p' "/proc/$main_pid/limits"
+  ps -p "$main_pid" -o pid,%cpu,%mem,rss,vsz,etime,cmd
+fi
+
+echo
+echo "== Aktywne połączenia TCP do listenerów DNS =="
+ss -Htan state established | awk '
+  $3 ~ /:53$/  { dns++ }
+  $3 ~ /:443$/ { doh++ }
+  $3 ~ /:853$/ { dot++ }
+  END {
+    printf "TCP/53: %d\nDoH/443: %d\nDoT/853: %d\n", dns+0, doh+0, dot+0
+  }
+'
+
+echo
+echo "== Kolejki listenerów (Recv-Q / Send-Q) =="
+ss -lnt 'sport = :53 or sport = :443 or sport = :853'
+
+echo
+echo "== Liczniki hosta od startu systemu i conntrack =="
+if command -v nstat >/dev/null 2>&1; then
+  nstat -az 2>/dev/null | awk '$1 ~ /TcpExtListen(Overflows|Drops)/ { print }'
+fi
+if [ -r /proc/sys/net/netfilter/nf_conntrack_count ]; then
+  printf "nf_conntrack_count="
+  cat /proc/sys/net/netfilter/nf_conntrack_count
+  printf "nf_conntrack_max="
+  cat /proc/sys/net/netfilter/nf_conntrack_max
+fi
+
+echo
+echo "== Ostrzeżenia z ostatniego okresu: $SINCE =="
+journalctl -u "$SERVICE" --since "$SINCE" --no-pager 2>/dev/null | \
+  grep -Ei 'tcp-clients|recursive-clients|clients-per-query|quota reached|spill|too many open files|SERVFAIL' | \
+  tail -n 80 || true

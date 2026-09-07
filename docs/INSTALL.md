@@ -446,3 +446,6 @@ named-checkconf && systemctl reload named
 ```
 
 Jeżeli walidacja zgłasza błąd, nie przeładowuj usługi.
+
+Diagnostyka limitów `tcp-clients`, rekursji, DoH, deskryptorów i pamięci oraz
+procedura ich zwiększania znajduje się w `docs/DIAGNOSTICS-CAPACITY.md`.
