@@ -253,6 +253,15 @@ dig -6 @dns1.example.net google.com A +https +tls-ca +tls-hostname=dns1.example.
 Adres DoH to `https://dns1.example.net/dns-query`. Otwarcie go w zwykłej
 karcie przeglądarki nie jest miarodajnym testem protokołu.
 
+### 6.1 Starsze MikroTiki
+
+RouterOS 6.49.x nie jest wspierany jako bezpośredni klient natywnego DoH
+BIND-a. Starszy klient używa HTTP/1.1, a endpoint BIND-a jest oparty na HTTP/2;
+typowym objawem jest `remote disconnected while in HTTP exchange`. RouterOS
+6.49.x nie udostępnia też udokumentowanego klienta upstream DoT. Użyj na nim
+DNS/53 do obu resolverów operatora. Szczegóły, diagnostyka i odsyłacz do
+niewspieranej protezy znajdują się w `docs/CLIENT-COMPATIBILITY.md`.
+
 ## 7. Logi
 
 ```sh

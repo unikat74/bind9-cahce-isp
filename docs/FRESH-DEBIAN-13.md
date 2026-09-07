@@ -244,6 +244,10 @@ dig -4 @dns1.example.net google.com A +https +tls-ca +tls-hostname=dns1.example.
 dig -6 @dns1.example.net google.com A +https +tls-ca +tls-hostname=dns1.example.net
 ```
 
+Przed przekazaniem danych klientowi sprawdź tabelę zgodności w
+`docs/CLIENT-COMPATIBILITY.md`. W szczególności nie deklaruj bezpośredniego DoH
+z BIND-em jako wspieranego dla RouterOS 6.49.x.
+
 ## 10. ThreatFox, hazard i para dns1/dns2
 
 Najpierw uruchom instalator obu RPZ w roli primary na dns1. Potwierdź

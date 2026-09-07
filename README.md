@@ -35,6 +35,8 @@ dziesiątek tysięcy stref hazardowych został usunięty z aktywnej konfiguracji
 
 Diagnostykę obciążenia, wartości domyślne limitów i bezpieczne skalowanie opisuje
 [`docs/DIAGNOSTICS-CAPACITY.md`](docs/DIAGNOSTICS-CAPACITY.md).
+Zgodność klientów, ograniczenia RouterOS 6.x oraz niewspieraną warstwę zgodności
+opisuje [`docs/CLIENT-COMPATIBILITY.md`](docs/CLIENT-COMPATIBILITY.md).
 
 Pierwsze wdrożenie zaczynaj od
 [`docs/FRESH-DEBIAN-13.md`](docs/FRESH-DEBIAN-13.md), a następnie korzystaj z
