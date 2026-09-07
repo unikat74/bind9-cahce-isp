@@ -24,4 +24,8 @@ zabezpieczonym transferze TSIG.
 - `systemd/` — codzienne uruchamianie aktualizacji na dns1;
 - `docs/` — wdrożenie i testy.
 
+Pierwsze wdrożenie zaczynaj od
+[`docs/FRESH-DEBIAN-13.md`](docs/FRESH-DEBIAN-13.md), a następnie korzystaj z
+pełnej instrukcji komponentów w [`docs/INSTALL.md`](docs/INSTALL.md).
+
 Nigdy nie commituj API key, TSIG secret, certyfikatów TLS ani pobranego feedu RPZ.
