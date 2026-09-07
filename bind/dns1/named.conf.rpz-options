@@ -1,0 +1,5 @@
+// Audit: detects IOC but does not alter DNS answers.
+response-policy {
+    zone "rpz.threatfox.abuse.ch" policy disabled log yes;
+};
+

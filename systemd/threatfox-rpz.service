@@ -1,0 +1,9 @@
+[Unit]
+Description=ThreatFox RPZ update
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/update-threatfox-rpz
+

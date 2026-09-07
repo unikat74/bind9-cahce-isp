@@ -1,0 +1,7 @@
+# Sekrety i dane generowane lokalnie
+*.key
+*.pem
+*.env
+rpz/*.rpz
+var/
+

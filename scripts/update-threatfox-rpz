@@ -1,0 +1,19 @@
+#!/bin/sh
+set -eu
+
+. /etc/threatfox.env
+: "${THREATFOX_AUTH_KEY:?Brak klucza w /etc/threatfox.env}"
+
+TARGET="/etc/bind/rpz/threatfox.rpz"
+TMP="$(mktemp /etc/bind/rpz/threatfox.rpz.new.XXXXXX)"
+URL="https://threatfox-api.abuse.ch/v2/files/exports/${THREATFOX_AUTH_KEY}/threatfox.rpz"
+trap 'rm -f "$TMP"' EXIT
+
+/usr/bin/curl --fail --silent --show-error --location "$URL" --output "$TMP"
+grep -q 'SOA' "$TMP"
+/usr/bin/named-checkzone rpz.threatfox.abuse.ch "$TMP" >/dev/null
+chown root:bind "$TMP"
+chmod 640 "$TMP"
+mv "$TMP" "$TARGET"
+/usr/sbin/rndc reload rpz.threatfox.abuse.ch
+
