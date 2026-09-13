@@ -1,0 +1,22 @@
+[Unit]
+Description=DNSCrypt test frontend for local BIND
+Requires=isp-dnscrypt-test-firewall.service
+After=isp-dnscrypt-test-firewall.service named.service
+[Service]
+User=isp-dnscrypt-test
+Group=isp-dnscrypt-test
+ExecStart=/opt/isp-dnscrypt-test/encrypted-dns --config /etc/isp-dnscrypt-test.toml
+WorkingDirectory=/var/lib/isp-dnscrypt-test
+StateDirectory=isp-dnscrypt-test
+StateDirectoryMode=0700
+UMask=0077
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+MemoryMax=256M
+CPUQuota=100%
+TasksMax=64

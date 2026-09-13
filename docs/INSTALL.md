@@ -265,8 +265,10 @@ niewspieranej protezy znajdują się w `docs/CLIENT-COMPATIBILITY.md`.
 ## 7. Logi
 
 DoQ z firewallem i Fail2Ban dodaj według [`DOQ-INSTALL.md`](DOQ-INSTALL.md).
-Eksperymentalne DNSCrypt opisuje [`DOQ-DNSCRYPT.md`](DOQ-DNSCRYPT.md);
-pozostaje wyłączone z powodu nieudanego testu TCP.
+Wdrożony DNSCrypt przez encrypted-dns-server oraz jego instalator opisuje
+[`DNSCRYPT-INSTALL.md`](DNSCRYPT-INSTALL.md).
+Eksperymentalne DNSCrypt w samym dnsdist opisuje [`DOQ-DNSCRYPT.md`](DOQ-DNSCRYPT.md);
+ten wariant pozostaje wyłączony z powodu nieudanego testu TCP.
 Rozszerzenie ma osobne listenery dnsdist i zachowuje powyższe usługi BIND-a.
 
 ```sh

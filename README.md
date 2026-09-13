@@ -8,6 +8,13 @@ certyfikatów. DoQ wdrożono na obu serwerach — wyniki odbioru
 [dns1](docs/DOQ-DNS1-DEPLOYMENT.md) i [dns2](docs/DOQ-DNS2-DEPLOYMENT.md).
 DNSCrypt pozostaje domyślnie wyłączony: testy
 wykryły błąd pobierania certyfikatu po TCP w pakietach dnsdist 2.1.2 i 2.0.9.
+Na obu serwerach działa osobny `encrypted-dns-server` udostępniony ACL klientów:
+[dns2: testy i opóźnienia](docs/DNSCRYPT-DNS2-TEST.md),
+[dns1: wdrożenie i odbiór](docs/DNSCRYPT-DNS1-DEPLOYMENT.md).
+
+**Instalacja DNSCrypt i aktualizacja konfiguracji:**
+[`docs/DNSCRYPT-INSTALL.md`](docs/DNSCRYPT-INSTALL.md), moduł
+`installer/bootstrap-dnscrypt.py` (generowanie, kontrola hosta, nowa instalacja).
 
 **Instalacja działającego DoQ:** [`docs/DOQ-INSTALL.md`](docs/DOQ-INSTALL.md).
 Zawiera szablon nftables odrzucający UDP 853 spoza ACL od pierwszego pakietu,
@@ -46,6 +53,7 @@ rollbacku. Końcowy stan produkcji oraz kryteria ponownego otwarcia opisuje
 
 - `bind/` — szablony konfiguracji BIND;
 - `dnsdist/` — opcjonalny frontend DoQ/DNSCrypt z backendem BIND przez PROXYv2;
+- `encrypted-dns/` — szablon wdrożonego frontendu DNSCrypt do lokalnego BIND;
 - `nftables/` — szablon ACL klientów dla DoQ, DROP bez logowania pakietów;
 - `fail2ban/` — nadpisanie portów istniejących jaili DNS, w tym UDP 853;
 - `servers/` — snapshoty faktycznych konfiguracji dns1 i dns2, z zachowaniem

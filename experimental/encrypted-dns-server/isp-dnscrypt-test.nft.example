@@ -1,0 +1,10 @@
+add table inet isp_dnscrypt_test
+flush table inet isp_dnscrypt_test
+table inet isp_dnscrypt_test {
+ chain input {
+  type filter hook input priority -6; policy accept;
+  meta l4proto { tcp, udp } th dport 8443 ip saddr { 127.0.0.1, 198.51.100.10 } counter accept
+  meta l4proto { tcp, udp } th dport 8443 ip6 saddr { ::1, 2001:db8:100:1::2 } counter accept
+  meta l4proto { tcp, udp } th dport 8443 counter drop
+ }
+}

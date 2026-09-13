@@ -10,6 +10,9 @@ czytać ich wszystkich po kolei.
 | Instalacja dwóch resolverów na czystym Debianie 13 | [`FRESH-DEBIAN-13.md`](FRESH-DEBIAN-13.md) |
 | Pełna konfiguracja BIND, TLS, DoT, DoH, RPZ i Fail2Ban | [`INSTALL.md`](INSTALL.md) |
 | Instalacja DoQ: firewall, TLS, Fail2Ban, systemd i rollback | [`DOQ-INSTALL.md`](DOQ-INSTALL.md) |
+| Instalator DNSCrypt, aktualizacja dns1/dns2 i konfiguracja klientów | [`DNSCRYPT-INSTALL.md`](DNSCRYPT-INSTALL.md) |
+| DNSCrypt dla klientów na dns1 | [`DNSCRYPT-DNS1-DEPLOYMENT.md`](DNSCRYPT-DNS1-DEPLOYMENT.md) |
+| Test alternatywnego DNSCrypt na dns2 i pomiar opóźnień | [`DNSCRYPT-DNS2-TEST.md`](DNSCRYPT-DNS2-TEST.md) |
 | Dołożenie DoQ i DNSCrypt przez dnsdist | [`DOQ-DNSCRYPT.md`](DOQ-DNSCRYPT.md) |
 | Wdrożone DoQ na dns2 i wyniki odbioru | [`DOQ-DNS2-DEPLOYMENT.md`](DOQ-DNS2-DEPLOYMENT.md) |
 | Wdrożone DoQ na dns1 i testy między serwerami | [`DOQ-DNS1-DEPLOYMENT.md`](DOQ-DNS1-DEPLOYMENT.md) |

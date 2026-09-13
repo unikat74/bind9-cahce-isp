@@ -1,0 +1,13 @@
+[Unit]
+Description=Client ACL for DNSCrypt
+Before=isp-dnscrypt.service
+After=network-pre.target
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/sbin/nft -f /etc/nftables.d/isp-dnscrypt.nft
+ExecReload=/usr/sbin/nft -f /etc/nftables.d/isp-dnscrypt.nft
+ExecStop=/usr/sbin/nft delete table inet isp_dnscrypt
+
+[Install]
+WantedBy=multi-user.target

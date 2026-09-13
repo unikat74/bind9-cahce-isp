@@ -71,3 +71,4 @@ systemctl daemon-reload
 
 echo "Pliki obu RPZ są gotowe. Dodaj include'y według docs/INSTALL.md,"
 echo "wykonaj named-checkconf i reload, a timery włącz dopiero po testach."
+echo "DNSCrypt jest osobnym etapem: installer/bootstrap-dnscrypt.py i docs/DNSCRYPT-INSTALL.md."

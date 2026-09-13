@@ -1,5 +1,8 @@
 # Instalacja DoQ i ochrona UDP 853
 
+Osobny, wdrożony DNSCrypt instaluj według [DNSCRYPT-INSTALL.md](DNSCRYPT-INSTALL.md).
+Wzmianki o wyłączonym DNSCrypt poniżej dotyczą listenera dnsdist.
+
 Procedura odtwarza zakres wdrożony na dns1 i dns2 13 września 2026.
 Wykonuj ją kolejno na każdym serwerze, z katalogu głównego repozytorium,
 jako root. To rozszerzenie działającego BIND-a, nie instalator całego systemu.

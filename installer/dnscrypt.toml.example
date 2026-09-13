@@ -1,0 +1,9 @@
+# Osobny plik dla kazdego hosta. Lokalne dnscrypt.toml jest ignorowane przez Git.
+# dns1: isp-dnscrypt / dns1.example.net
+# Istniejacy dns2: isp-dnscrypt-test / dns2-test.example.net (zachowaj tozsamosc).
+instance = "isp-dnscrypt"
+provider = "dns1.example.net"
+ipv4 = "198.51.100.10"
+ipv6 = "2001:db8:100:1::2"
+# DOKLADNA ACL klienci_sieci z lokalnego BIND, lacznie z sieciami prywatnymi.
+clients = ["127.0.0.1/32", "::1/128", "198.51.96.0/21", "203.0.112.0/22", "2001:db8:100::/48"]

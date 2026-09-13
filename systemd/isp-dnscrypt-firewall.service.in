@@ -1,0 +1,13 @@
+[Unit]
+Description=Client ACL for DNSCrypt
+Before=@INSTANCE@.service
+After=network-pre.target
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/sbin/nft -f /etc/nftables.d/@INSTANCE@.nft
+ExecReload=/usr/sbin/nft -f /etc/nftables.d/@INSTANCE@.nft
+ExecStop=/usr/sbin/nft delete table inet @TABLE@
+
+[Install]
+WantedBy=multi-user.target

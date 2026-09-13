@@ -112,3 +112,18 @@ Projekt należy ponownie otworzyć, jeśli wystąpi przynajmniej jeden z warunk�
 
 Zmiany produkcyjne wykonuj kolejno: jeden resolver, test z punktu widzenia
 klienta, następnie drugi. Nie restartuj obu resolverów jednocześnie.
+
+## DNSCrypt na dns2 — 13 września 2026
+
+Osobny encrypted-dns-server 0.9.22 udostępniono klientom z ACL BIND po
+UDP/TCP 8443, IPv4/IPv6, z autostartem i DROP pozostałych źródeł.
+Fail2Ban na dns2 obejmuje dodatkowo 8443; dns1 nie zmieniono.
+BIND widzi klienta jako loopback. Limity i ograniczenia cache, wyniki
+odbioru oraz rollback: [DNSCRYPT-DNS2-TEST.md](DNSCRYPT-DNS2-TEST.md).
+DNSCrypt w samym dnsdist pozostaje wyłączony na obu hostach.
+
+## DNSCrypt na dns1 — 13 września 2026
+
+Udostępniono także na dns1: UDP/TCP 8443, pełna ACL klientów IPv4/IPv6,
+autostart, osobne klucze i rozszerzone bany Fail2Ban. DoQ pozostało w dnsdist.
+Testy i ograniczenia: [DNSCRYPT-DNS1-DEPLOYMENT.md](DNSCRYPT-DNS1-DEPLOYMENT.md).

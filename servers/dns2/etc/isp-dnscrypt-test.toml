@@ -1,0 +1,39 @@
+listen_addrs = [
+ { local = "198.51.100.11:8443", external = "198.51.100.11:8443" },
+ { local = "[2001:db8:100:1::3]:8443", external = "[2001:db8:100:1::3]:8443" },
+ { local = "127.0.0.1:8443", external = "127.0.0.1:8443" }
+]
+upstream_addrs = ["127.0.0.1:53"]
+state_file = "/var/lib/isp-dnscrypt-test/encrypted-dns.state"
+udp_timeout = 3
+tcp_timeout = 3
+udp_max_active_connections = 128
+tcp_max_active_connections = 64
+cache_capacity = 1
+cache_ttl_min = 0
+cache_ttl_max = 0
+cache_ttl_error = 0
+client_ttl_holdon = 0
+daemonize = false
+[dnscrypt]
+provider_name = "dns2-test.example.net"
+pq_enabled = false
+dnssec = true
+no_filters = false
+no_logs = false
+key_cache_capacity = 1024
+[tls]
+[quic]
+[filtering]
+ignore_unqualified_hostnames = false
+[anonymized_dns]
+enabled = false
+allowed_ports = []
+blacklisted_ips = []
+[access_control]
+enabled = false
+tokens = []
+[rate_limit]
+enabled = true
+max_queries_per_second = 100
+capacity = 128

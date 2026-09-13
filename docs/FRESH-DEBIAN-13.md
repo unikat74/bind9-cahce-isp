@@ -10,6 +10,8 @@ Przykłady używają adresów dokumentacyjnych. Wpisz własne wartości.
 Po uruchomieniu podstawowego resolvera i TLS dodaj DoQ według
 [DOQ-INSTALL.md](DOQ-INSTALL.md): osobny frontend, ACL nftables dla UDP 853,
 Fail2Ban i testy obu rodzin adresów. Instalator RPZ nie wykonuje tych kroków.
+DNSCrypt dodaj osobnym modułem `installer/bootstrap-dnscrypt.py` według
+[DNSCRYPT-INSTALL.md](DNSCRYPT-INSTALL.md), po uruchomieniu BIND i jaili DNS.
 
 ## 0. Przygotuj dane przed logowaniem
 

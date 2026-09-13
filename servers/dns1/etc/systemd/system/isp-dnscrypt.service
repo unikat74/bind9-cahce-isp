@@ -1,0 +1,25 @@
+[Unit]
+Description=DNSCrypt client frontend for local BIND
+Requires=isp-dnscrypt-firewall.service
+After=isp-dnscrypt-firewall.service named.service
+[Service]
+User=isp-dnscrypt
+Group=isp-dnscrypt
+ExecStart=/opt/isp-dnscrypt/encrypted-dns --config /etc/isp-dnscrypt.toml
+WorkingDirectory=/var/lib/isp-dnscrypt
+StateDirectory=isp-dnscrypt
+StateDirectoryMode=0700
+UMask=0077
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+MemoryMax=256M
+CPUQuota=100%
+TasksMax=64
+
+[Install]
+WantedBy=multi-user.target

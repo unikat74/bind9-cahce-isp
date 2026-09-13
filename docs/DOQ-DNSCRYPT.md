@@ -1,5 +1,9 @@
 # DoQ i DNSCrypt dla pary resolverów ISP
 
+**Wariant wdrożony DNSCrypt:** osobny encrypted-dns-server na obu hostach,
+opis i instalator w [DNSCRYPT-INSTALL.md](DNSCRYPT-INSTALL.md).
+Poniższa blokada i procedury DNSCrypt dotyczą wyłącznie implementacji dnsdist.
+
 Rozszerzenie przygotowane 13 września 2026. Wymaga osobnego odbioru na dns1
 i dns2; nie jest częścią historycznego odbioru produkcji z 7 września.
 
