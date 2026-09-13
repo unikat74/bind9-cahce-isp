@@ -1,0 +1,13 @@
+# Port overrides for EXISTING named-cache-denied jails, not standalone jails.
+# Keep existing filters, actions, ignoreip, ban durations and log paths.
+[named-cache-denied-udp]
+port = 53,853
+
+[named-cache-denied-udp6]
+port = 53,853
+
+[named-cache-denied-tcp]
+port = 53,443,853
+
+[named-cache-denied-tcp6]
+port = 53,443,853

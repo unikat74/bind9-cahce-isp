@@ -16,6 +16,10 @@ potrafić połączyć się bezpośrednio z natywnym DoH BIND-a.
 
 ## Polityka wsparcia
 
+DoQ (UDP 853) i DNSCrypt (UDP/TCP 8443) są osobnym rozszerzeniem opisanym w
+[`DOQ-DNSCRYPT.md`](DOQ-DNSCRYPT.md). Wymagają klienta danego protokołu oraz
+nowego odbioru. Poniższa macierz nie potwierdza ich obsługi przez RouterOS.
+
 | Klient | DNS/53 | DoT/853 | Natywny DoH BIND/443 |
 |---|---|---|---|
 | Współczesny system lub aplikacja obsługująca standard | wspierany | wspierany | wspierany po teście HTTP/2 i certyfikatu |

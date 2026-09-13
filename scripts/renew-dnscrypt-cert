@@ -1,0 +1,133 @@
+#!/usr/bin/python3
+"""Odnawia certyfikaty DNSCrypt przez dnsdist; zachowuje wazne stare klucze."""
+import argparse
+import fcntl
+import grp
+import json
+import os
+from pathlib import Path
+import struct
+import subprocess
+import tempfile
+import time
+
+from nacl.signing import SigningKey, VerifyKey
+from nacl.public import PrivateKey
+
+ROOT = Path("/etc/dnsdist/dnscrypt")
+CONFIG = "/etc/dnsdist/dnsdist.conf"
+DAY = 86400
+
+
+def run(*args):
+    subprocess.run(args, check=True)
+
+
+def generate(lua):
+    # Funkcje generujace dzialaja w lokalnym --check-config, bez konsoli/uslugi.
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".conf") as config:
+        config.write(lua)
+        config.flush()
+        run("dnsdist", "--check-config", "-C", config.name)
+
+
+def certificate(path, public_key):
+    data = path.read_bytes()
+    if len(data) != 124 or data[:8] != b"DNSC\x00\x01\x00\x00":
+        raise ValueError(f"Nieprawidlowy certyfikat DNSCrypt: {path}")
+    VerifyKey(public_key).verify(data[72:], data[8:72])
+    secret = path.with_suffix(".key").read_bytes()
+    if len(secret) != 32 or bytes(PrivateKey(secret).public_key) != data[72:104]:
+        raise ValueError(f"Nieprawidlowy klucz resolvera: {path}")
+    return struct.unpack("!III", data[112:124])  # serial, poczatek, koniec
+
+
+def atomic(path, data, gid):
+    fd, name = tempfile.mkstemp(dir=path.parent, prefix=".new-")
+    try:
+        with os.fdopen(fd, "wb") as output:
+            output.write(data)
+            output.flush()
+            os.fsync(output.fileno())
+        os.chown(name, 0, gid)
+        os.chmod(name, 0o640)
+        os.replace(name, path)
+    finally:
+        Path(name).unlink(missing_ok=True)
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--init", action="store_true", help="pierwsze klucze; bez restartu")
+    args = parser.parse_args()
+    if os.geteuid() != 0:
+        raise SystemExit("Uruchom jako root")
+    os.umask(0o077)
+    gid = grp.getgrnam("_dnsdist").gr_gid
+    ROOT.mkdir(parents=True, exist_ok=True, mode=0o750)
+    os.chown(ROOT, 0, gid)
+    os.chmod(ROOT, 0o750)
+    with (ROOT / ".lock").open("a") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        manifest = ROOT / "certificates.lua"
+        if args.init and manifest.exists():
+            raise SystemExit("Juz zainicjalizowane; uzyj bez --init")
+        if not args.init and not manifest.exists():
+            raise SystemExit("Najpierw wykonaj --init")
+        public, private = ROOT / "provider.pub", ROOT / "provider.key"
+        if not public.exists() and not private.exists() and args.init:
+            generate(f"generateDNSCryptProviderKeys({json.dumps(str(public))}, {json.dumps(str(private))})\n")
+        if not public.exists() or not private.exists():
+            raise SystemExit("Niekompletna para provider; przywroc kopie, nie zmieniaj tozsamosci")
+        public_key = public.read_bytes()
+        if len(public_key) != 32 or private.stat().st_size != 64:
+            raise SystemExit("Nieprawidlowe klucze provider")
+        if bytes(SigningKey(private.read_bytes()[:32]).verify_key) != public_key:
+            raise SystemExit("Klucze provider nie stanowia pary")
+        os.chmod(private, 0o600)
+        now = int(time.time())
+        pairs = [(p, certificate(p, public_key)) for p in ROOT.glob("resolver-*.cert")]
+        current = [(p, info) for p, info in pairs if info[1] <= now < info[2]]
+        if not current or max(info[2] for _, info in current) <= now + 7 * DAY:
+            serial = max([now] + [info[0] + 1 for _, info in pairs])
+            dest = ROOT / f"resolver-{serial}.cert"
+            secret = dest.with_suffix(".key")
+            generate("generateDNSCryptCertificate(" + ", ".join([
+                json.dumps(str(private)), json.dumps(str(dest)), json.dumps(str(secret)),
+                str(serial), str(now - 300), str(now + 14 * DAY)
+            ]) + ")\n")
+            info = certificate(dest, public_key)
+            for path in (dest, secret):
+                os.chown(path, 0, gid)
+                os.chmod(path, 0o640)
+            current.append((dest, info))
+        current.sort(key=lambda item: item[1][0])
+        certs = ", ".join(json.dumps(str(p)) for p, _ in current)
+        keys = ", ".join(json.dumps(str(p.with_suffix(".key"))) for p, _ in current)
+        content = (f"return {{certs={{{certs}}}, keys={{{keys}}}}}\n").encode()
+        old = manifest.read_bytes() if manifest.exists() else None
+        if content == old:
+            print("DNSCrypt: certyfikaty aktualne")
+            return
+        atomic(manifest, content, gid)
+        if args.init:
+            print("DNSCrypt: przygotowano klucze; sprawdz konfiguracje przed uruchomieniem")
+            return
+        active = False
+        try:
+            active = subprocess.run(["systemctl", "is-active", "--quiet", "dnsdist"]).returncode == 0
+            run("dnsdist", "--check-config", "-C", CONFIG)
+            if active:
+                run("systemctl", "restart", "dnsdist")
+                run("systemctl", "is-active", "--quiet", "dnsdist")
+        except Exception:
+            atomic(manifest, old, gid)
+            if active:
+                run("systemctl", "restart", "dnsdist")
+            raise
+        # Stare pliki pozostaja dla rollbacku; manifest zawiera wszystkie wazne pary.
+        print("DNSCrypt: odnowiono; zachowano wazne poprzednie certyfikaty")
+
+
+if __name__ == "__main__":
+    main()

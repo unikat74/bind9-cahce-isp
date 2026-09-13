@@ -7,6 +7,10 @@ otwórz drugą sesję testową.
 
 Przykłady używają adresów dokumentacyjnych. Wpisz własne wartości.
 
+Po uruchomieniu podstawowego resolvera i TLS dodaj DoQ według
+[DOQ-INSTALL.md](DOQ-INSTALL.md): osobny frontend, ACL nftables dla UDP 853,
+Fail2Ban i testy obu rodzin adresów. Instalator RPZ nie wykonuje tych kroków.
+
 ## 0. Przygotuj dane przed logowaniem
 
 Potrzebujesz:

@@ -2,6 +2,17 @@
 
 **Status: produkcja odebrana, zakres podstawowy zakończony 7 września 2026.**
 
+Rozszerzenie DoQ i DNSCrypt przez dnsdist jest opisane w
+[`docs/DOQ-DNSCRYPT.md`](docs/DOQ-DNSCRYPT.md). Zawiera szablony i obsługę
+certyfikatów. DoQ wdrożono na obu serwerach — wyniki odbioru
+[dns1](docs/DOQ-DNS1-DEPLOYMENT.md) i [dns2](docs/DOQ-DNS2-DEPLOYMENT.md).
+DNSCrypt pozostaje domyślnie wyłączony: testy
+wykryły błąd pobierania certyfikatu po TCP w pakietach dnsdist 2.1.2 i 2.0.9.
+
+**Instalacja działającego DoQ:** [`docs/DOQ-INSTALL.md`](docs/DOQ-INSTALL.md).
+Zawiera szablon nftables odrzucający UDP 853 spoza ACL od pierwszego pakietu,
+jednostki systemd, porty Fail2Ban, odnowienia TLS, testy i wycofanie.
+
 Konfiguracja referencyjna dla pary BIND 9 na Debianie: rekurencyjny resolver/cache,
 DNS-over-TLS, DNS-over-HTTPS, ograniczenie otwartego resolvera, Fail2Ban oraz
 ThreatFox RPZ w trybie audytu i rejestr hazardowy MF w aktywnej strefie RPZ.
@@ -34,6 +45,9 @@ rollbacku. Końcowy stan produkcji oraz kryteria ponownego otwarcia opisuje
 ## Zawartość repozytorium
 
 - `bind/` — szablony konfiguracji BIND;
+- `dnsdist/` — opcjonalny frontend DoQ/DNSCrypt z backendem BIND przez PROXYv2;
+- `nftables/` — szablon ACL klientów dla DoQ, DROP bez logowania pakietów;
+- `fail2ban/` — nadpisanie portów istniejących jaili DNS, w tym UDP 853;
 - `servers/` — snapshoty faktycznych konfiguracji dns1 i dns2, z zachowaniem
   ścieżek systemowych i bez sekretów;
 - `scripts/` — aktualizacja ThreatFox i rejestru hazardowego RPZ;

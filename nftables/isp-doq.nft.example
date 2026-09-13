@@ -1,0 +1,26 @@
+# TEMPLATE: replace documentation prefixes with the complete BIND client ACL.
+# Match dnsdist setACL as well. Never use a default route as a client prefix.
+# Own table only; applying this file is one atomic nftables transaction.
+add table inet isp_doq
+flush table inet isp_doq
+table inet isp_doq {
+    set clients4 {
+        type ipv4_addr
+        flags interval
+        auto-merge
+        elements = { 127.0.0.1/32, 198.51.96.0/21, 203.0.112.0/22 }
+    }
+    set clients6 {
+        type ipv6_addr
+        flags interval
+        auto-merge
+        elements = { ::1/128, 2001:db8:100::/48 }
+    }
+    chain input {
+        type filter hook input priority -5; policy accept;
+        udp dport 853 ip saddr @clients4 counter accept
+        udp dport 853 ip6 saddr @clients6 counter accept
+        # Silent drop from the first packet, before dnsdist; no per-packet log.
+        udp dport 853 counter drop
+    }
+}

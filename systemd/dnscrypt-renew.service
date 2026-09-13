@@ -1,0 +1,13 @@
+[Unit]
+Description=Odnowienie certyfikatu DNSCrypt dnsdist
+After=dnsdist.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/renew-dnscrypt-cert
+User=root
+UMask=0077
+PrivateTmp=yes
+ProtectHome=yes
+ProtectSystem=strict
+ReadWritePaths=/etc/dnsdist/dnscrypt

@@ -1,0 +1,13 @@
+# Own table only; never flush the existing ruleset or Fail2Ban tables.
+add table inet isp_doq
+flush table inet isp_doq
+table inet isp_doq {
+ set clients4 { type ipv4_addr; flags interval; auto-merge; elements = { 127.0.0.1/32, 198.51.96.0/21, 203.0.112.0/22, 192.168.123.0/24, 172.16.0.0/16, 172.17.0.0/16, 10.0.0.0/16, 10.20.0.0/24, 10.255.0.0/16 }; }
+ set clients6 { type ipv6_addr; flags interval; auto-merge; elements = { ::1/128, 2001:db8:100::/48, fe80::/10 }; }
+ chain input {
+  type filter hook input priority -5; policy accept;
+  udp dport 853 ip saddr @clients4 counter accept
+  udp dport 853 ip6 saddr @clients6 counter accept
+  udp dport 853 counter drop
+ }
+}

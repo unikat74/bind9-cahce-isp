@@ -1,0 +1,5 @@
+// Dodatkowy include WEWNATRZ options {}; pozostaw istniejace listen-on.
+// BIND 9.20: rzeczywisty klient przychodzi w naglowku PROXYv2 od dnsdist.
+listen-on port 5300 proxy plain { 127.0.0.1; };
+allow-proxy { 127.0.0.1; };
+allow-proxy-on { 127.0.0.1; };

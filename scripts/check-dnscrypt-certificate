@@ -1,0 +1,47 @@
+#!/usr/bin/python3
+"""Sprawdza pobieranie podpisanych certyfikatow DNSCrypt po UDP i TCP."""
+import argparse
+from pathlib import Path
+import struct
+import time
+
+import dns.query
+import dns.message
+import dns.rdatatype
+import dns.rcode
+from nacl.signing import VerifyKey
+
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument("ip")
+parser.add_argument("provider")
+parser.add_argument("public_key", type=Path)
+parser.add_argument("--port", type=int, default=8443)
+args = parser.parse_args()
+key = VerifyKey(args.public_key.read_bytes())
+query = dns.message.make_query(args.provider, "TXT")
+failures = []
+for label, exchange in (("UDP", dns.query.udp), ("TCP", dns.query.tcp)):
+    try:
+        answer = exchange(query, args.ip, port=args.port, timeout=3)
+        if answer.rcode() != dns.rcode.NOERROR:
+            raise ValueError(dns.rcode.to_text(answer.rcode()))
+        valid = 0
+        for rrset in answer.answer:
+            if rrset.rdtype != dns.rdatatype.TXT:
+                continue
+            for record in rrset:
+                data = b"".join(record.strings)
+                if len(data) < 124 or data[:4] != b"DNSC":
+                    raise ValueError("nieprawidlowy format certyfikatu")
+                key.verify(data[72:], data[8:72])
+                _, begin, end = struct.unpack("!III", data[112:124])
+                if begin <= time.time() < end:
+                    valid += 1
+        if not valid:
+            raise ValueError("brak waznego, podpisanego certyfikatu")
+        print(f"OK {label}: {valid} waznych certyfikatow")
+    except Exception as error:
+        failures.append(label)
+        print(f"BLAD {label}: {type(error).__name__}: {error}")
+if failures:
+    raise SystemExit(1)

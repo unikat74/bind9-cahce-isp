@@ -1,0 +1,90 @@
+#!/usr/bin/python3
+"""Osobny hook Certbota dla DoQ; atomowa podmiana pary certyfikat/klucz."""
+import argparse
+import fcntl
+import grp
+import os
+from pathlib import Path
+import shutil
+import subprocess
+import tempfile
+
+
+def run(*args):
+    return subprocess.run(args, check=True, stdout=subprocess.PIPE).stdout
+
+
+def link(target, current):
+    temporary = current.with_name(".current-new")
+    temporary.unlink(missing_ok=True)
+    temporary.symlink_to(target)
+    os.replace(temporary, current)
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--init", action="store_true", help="pierwsza kopia, bez restartu")
+    args = parser.parse_args()
+    name = Path("/etc/dnsdist/tls-hostname").read_text().strip()
+    source = Path(os.environ["RENEWED_LINEAGE"])
+    if source.name != name:
+        if args.init:
+            raise SystemExit("RENEWED_LINEAGE nie odpowiada tls-hostname")
+        return  # Certbot odnawia rowniez certyfikaty innych uslug.
+    os.umask(0o077)
+    root = Path("/etc/dnsdist/tls")
+    root.mkdir(mode=0o750, parents=True, exist_ok=True)
+    gid = grp.getgrnam("_dnsdist").gr_gid
+    os.chown(root, 0, gid)
+    os.chmod(root, 0o750)
+    with (root / ".lock").open("a") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        current = root / "current"
+        if args.init and current.exists():
+            raise SystemExit("TLS juz zainicjalizowany; uruchom bez --init")
+        previous = os.readlink(current) if current.is_symlink() else None
+        active = False
+        generation = Path(tempfile.mkdtemp(prefix="generation-", dir=root))
+        try:
+            for filename in ("fullchain.pem", "privkey.pem"):
+                path = generation / filename
+                shutil.copyfile(source / filename, path)
+                os.chown(path, 0, gid)
+                os.chmod(path, 0o640)
+            cert, key = str(generation / "fullchain.pem"), str(generation / "privkey.pem")
+            run("openssl", "x509", "-in", cert, "-noout", "-checkend", "0")
+            run("openssl", "x509", "-in", cert, "-noout", "-checkhost", name)
+            run("openssl", "pkey", "-in", key, "-noout", "-check")
+            if run("openssl", "x509", "-in", cert, "-pubkey", "-noout") != run("openssl", "pkey", "-in", key, "-pubout"):
+                raise ValueError("Certyfikat i klucz TLS nie stanowia pary")
+            os.chown(generation, 0, gid)
+            os.chmod(generation, 0o750)
+            link(generation.name, current)
+            if not args.init:
+                try:
+                    active = subprocess.run(["systemctl", "is-active", "--quiet", "dnsdist"]).returncode == 0
+                    run("dnsdist", "--check-config", "-C", "/etc/dnsdist/dnsdist.conf")
+                    if active:
+                        run("systemctl", "restart", "dnsdist")
+                        run("systemctl", "is-active", "--quiet", "dnsdist")
+                except Exception:
+                    if previous:
+                        link(previous, current)
+                    else:
+                        current.unlink()
+                    if active and previous:
+                        run("systemctl", "restart", "dnsdist")
+                    raise
+        except Exception:
+            if current.is_symlink() and os.readlink(current) == generation.name:
+                if previous:
+                    link(previous, current)
+                else:
+                    current.unlink()
+            shutil.rmtree(generation)
+            raise
+        print("dnsdist: wdrozono certyfikat TLS " + name)
+
+
+if __name__ == "__main__":
+    main()

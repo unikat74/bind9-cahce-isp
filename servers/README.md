@@ -4,6 +4,12 @@ Katalogi `dns1/` i `dns2/` odzwierciedlają ścieżki na produkcyjnych
 serwerach, np. `dns1/etc/bind/named.conf.options` odpowiada
 `/etc/bind/named.conf.options` na dns1.
 
+13 września 2026 snapshot dns2 uzupełniono o wdrożone DoQ: dnsdist,
+listener PROXYv2 BIND-a, tabelę nftables, jednostkę ładowania reguł i hook
+TLS. Szczegóły zawiera `docs/DOQ-DNS2-DEPLOYMENT.md`.
+Następnie tego samego dnia uzupełniono snapshot dns1 po analogicznym
+wdrożeniu; odbiór i testy między serwerami opisuje `docs/DOQ-DNS1-DEPLOYMENT.md`.
+
 Celowo wykluczone z repozytorium:
 
 - `/etc/threatfox.env` — Auth-Key ThreatFox;

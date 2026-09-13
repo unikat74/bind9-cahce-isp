@@ -9,6 +9,17 @@ Nie ma otwartych problemów krytycznych blokujących eksploatację resolverów.
 
 ## Zrealizowany zakres
 
+13 września przygotowano rozszerzenie repozytorium o DoQ i DNSCrypt przez
+dnsdist. Jego konfigurację i osobny odbiór opisuje `DOQ-DNSCRYPT.md`.
+Poniższy zakres i wyniki odnoszą się do odbioru podstawowego z 7 września;
+nie potwierdzają wdrożenia nowych protokołów.
+DoQ wdrożono na dns2, a następnie dns1 13 września.
+`DOQ-DNS2-DEPLOYMENT.md` i `DOQ-DNS1-DEPLOYMENT.md` opisują testy,
+ograniczenia odbioru i rollback. Wykonano także testy DoQ między serwerami.
+DNSCrypt ma przygotowaną konfigurację
+i rotację kluczy, ale pozostaje wyłączony z powodu nieudanego testu TCP na
+dnsdist 2.1.2 i 2.0.9. Wyniki: `DOQ-DNSCRYPT-TESTS.md`.
+
 - dwa resolvery/cache BIND 9.20 na Debianie 13;
 - rekurencja i cache tylko dla zaufanych sieci IPv4/IPv6;
 - klasyczny DNS na UDP/TCP 53;
@@ -17,7 +28,8 @@ Nie ma otwartych problemów krytycznych blokujących eksploatację resolverów.
 - ThreatFox RPZ primary/secondary przez TSIG, w trybie audytu;
 - rejestr hazardowy MF jako jedna aktywna RPZ primary/secondary;
 - bezpieczne pobieranie, IDNA2008/UTS #46, walidacja i atomowa podmiana stref;
-- Fail2Ban/nftables dla DNS, DoT, DoH i SSH w IPv4 oraz IPv6;
+- Fail2Ban/nftables dla DNS, DoT, DoH, DoQ i SSH w IPv4 oraz IPv6
+  (jaile DNS: UDP `53,853`, TCP `53,443,853`; detekcja z logów odmowy BIND);
 - automatyczne timery ThreatFox, hazardu i Certbota;
 - diagnostyka pojemności BIND-a;
 - usunięcie starego mechanizmu tysięcy stref hazardowych;

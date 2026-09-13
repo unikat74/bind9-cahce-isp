@@ -112,4 +112,5 @@ options {
     server-id "[Secured]";
 
 include "/etc/bind/named.conf.rpz-options";
+include "/etc/bind/named.conf.dnsdist-options";
 };

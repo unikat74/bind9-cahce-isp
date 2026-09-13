@@ -9,6 +9,10 @@ czytać ich wszystkich po kolei.
 |---|---|
 | Instalacja dwóch resolverów na czystym Debianie 13 | [`FRESH-DEBIAN-13.md`](FRESH-DEBIAN-13.md) |
 | Pełna konfiguracja BIND, TLS, DoT, DoH, RPZ i Fail2Ban | [`INSTALL.md`](INSTALL.md) |
+| Instalacja DoQ: firewall, TLS, Fail2Ban, systemd i rollback | [`DOQ-INSTALL.md`](DOQ-INSTALL.md) |
+| Dołożenie DoQ i DNSCrypt przez dnsdist | [`DOQ-DNSCRYPT.md`](DOQ-DNSCRYPT.md) |
+| Wdrożone DoQ na dns2 i wyniki odbioru | [`DOQ-DNS2-DEPLOYMENT.md`](DOQ-DNS2-DEPLOYMENT.md) |
+| Wdrożone DoQ na dns1 i testy między serwerami | [`DOQ-DNS1-DEPLOYMENT.md`](DOQ-DNS1-DEPLOYMENT.md) |
 | Skrócone wdrożenie obu stref RPZ | [`DEPLOYMENT.md`](DEPLOYMENT.md) |
 | Diagnostyka obciążenia i zwiększanie limitów | [`DIAGNOSTICS-CAPACITY.md`](DIAGNOSTICS-CAPACITY.md) |
 | Zgodność klientów, w tym starszy MikroTik | [`CLIENT-COMPATIBILITY.md`](CLIENT-COMPATIBILITY.md) |
@@ -28,6 +32,7 @@ czytać ich wszystkich po kolei.
 
 - `bind/` zawiera szablony RPZ primary i secondary używane przez instalator;
 - `scripts/` oraz `systemd/` zawierają pliki instalowane na dns1/dns2;
+- `dnsdist/`, `nftables/` i `fail2ban/` zawierają szablony rozszerzenia DoQ;
 - `servers/` jest zanonimizowanym snapshotem produkcji, a nie katalogiem do
   bezpośredniego skopiowania na inny serwer;
 - `installer/inventory.env.example` jest publicznym przykładem; właściwy

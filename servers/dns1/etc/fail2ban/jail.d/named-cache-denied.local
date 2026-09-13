@@ -4,7 +4,7 @@ filter = named-cache-denied
 logpath = /var/log/named/security.log
 backend = auto
 banaction = nftables-multiport[blocktype=drop]
-port = 53
+port = 53,853
 protocol = udp
 maxretry = 2
 findtime = 60m
@@ -30,7 +30,7 @@ filter = named-cache-denied-v6
 logpath = /var/log/named/security.log
 backend = auto
 banaction = nftables-multiport-ip6[blocktype=drop]
-port = 53
+port = 53,853
 protocol = udp
 maxretry = 2
 findtime = 60m

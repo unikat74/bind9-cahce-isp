@@ -1,0 +1,28 @@
+-- Szablon dla jednego hosta; wpisz jego adresy i DOKLADNE sieci z ACL BIND-a.
+-- dnsdist 2.1.x z dns-over-quic i dnscrypt; BIND 9.20 z PROXYv2.
+setACL({
+  "127.0.0.1/32", "::1/128",
+  "198.51.96.0/21", "203.0.112.0/22", "2001:db8:100::/48"
+})
+
+-- Lokalny listener diagnostyczny; zapobiega domyslnemu zajeciu portu 53.
+setLocal("127.0.0.1:5301")
+newServer({address="127.0.0.1:5300", name="bind-local",
+  useProxyProtocol=true, checkName="localhost.", checkType="A"})
+
+-- Brak packet cache w dnsdist: kazde zapytanie trafia do polityk/logow BIND.
+local cert = "/etc/dnsdist/tls/current/fullchain.pem"
+local key = "/etc/dnsdist/tls/current/privkey.pem"
+addDOQLocal("198.51.100.10:853", cert, key)
+addDOQLocal("[2001:db8:100:1::2]:853", cert, key)
+
+-- DNSCrypt: wlacz dopiero w laboratorium i po odbiorze UDP ORAZ TCP.
+-- Pakiety 2.1.2 i 2.0.9 zwrocily pusty certyfikat po TCP w naszym tescie.
+-- Szczegoly i blokada wdrozenia: docs/DOQ-DNSCRYPT.md.
+local enableDNSCrypt = false
+if enableDNSCrypt then
+  local dc = dofile("/etc/dnsdist/dnscrypt/certificates.lua")
+  local provider = "2.dnscrypt-cert.dns1.example.net"
+  addDNSCryptBind("198.51.100.10:8443", provider, dc.certs, dc.keys)
+  addDNSCryptBind("[2001:db8:100:1::2]:8443", provider, dc.certs, dc.keys)
+end

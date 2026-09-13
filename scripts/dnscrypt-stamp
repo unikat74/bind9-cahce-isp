@@ -1,0 +1,30 @@
+#!/usr/bin/python3
+"""Tworzy stamp DNSCrypt bez deklarowania no-log/no-filter/DNSSEC."""
+import argparse
+import base64
+import ipaddress
+from pathlib import Path
+
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument("ip")
+parser.add_argument("provider", help="np. 2.dnscrypt-cert.dns1.example.net")
+parser.add_argument("public_key", type=Path)
+parser.add_argument("--port", type=int, default=8443)
+args = parser.parse_args()
+ip = ipaddress.ip_address(args.ip)
+if not 1 <= args.port <= 65535:
+    parser.error("nieprawidlowy port")
+address = f"[{ip}]:{args.port}" if ip.version == 6 else f"{ip}:{args.port}"
+public = args.public_key.read_bytes()
+if len(public) != 32:
+    parser.error("public_key musi byc surowym, 32-bajtowym provider.pub")
+
+
+def lp(value):
+    if not 0 < len(value) <= 255:
+        raise ValueError("Nieprawidlowa dlugosc pola stamp")
+    return bytes([len(value)]) + value
+
+
+payload = b"\x01" + bytes(8) + lp(address.encode("ascii")) + lp(public) + lp(args.provider.encode("ascii"))
+print("sdns://" + base64.urlsafe_b64encode(payload).decode("ascii").rstrip("="))
