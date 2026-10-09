@@ -72,6 +72,33 @@ pobiera feedów samodzielnie — odbiera obie strefy przez transfer TSIG.
 
 ## Eksploatacja po zamknięciu
 
+### Przegląd i aktualizacje — 9 października 2026
+
+Oba serwery zaktualizowano kolejno (dns2, następnie dns1) i zrestartowano.
+BIND działa w wersji `9.20.29-1~deb13u1`, kernel w wersji
+`6.12.111+deb13-amd64`, a pakiety OpenSSL w wersji `3.5.7-1~deb13u3`.
+Po aktualizacji nie pozostały oczekujące aktualizacje ani uszkodzone jednostki
+systemd. Sprawdzono DNS UDP/TCP, DoT/DoH, IPv6, walidację TLS, zgodność
+seriali RPZ oraz transfer obu stref przez TSIG. Działają również dnsdist
+i frontend DNSCrypt, obecne na produkcji od czasu wcześniejszego odbioru.
+
+Na obu resolverach ustawiono `recursive-clients 1500` i `tcp-clients 750`.
+Bezpośrednio po restarcie dns1 osiągnął limit rekursji; następnie obciążenie
+spadło do kilkunastu zapytań i w kontrolowanym okresie nie wystąpiły kolejne
+przekroczenia. Rozruch z pustym cache oraz okres szczytu wymagają obserwacji.
+Szczegóły doboru limitów zawiera `DIAGNOSTICS-CAPACITY.md`.
+
+`security.log` na obu serwerach rotuje codziennie przez logrotate, z 7
+archiwami i opóźnioną kompresją. Rotacja według rozmiaru jest wyłączona.
+Logi Certbota i archiwa nie wykazały błędów odnowienia; próbne odnowienie
+powiodło się na obu hostach. Test nie uruchamiał hooków wdrażania.
+Certyfikaty były ważne do 30 listopada (dns1) i 3 grudnia 2026 (dns2).
+
+Kopie konfiguracji sprzed aktualizacji zachowano wyłącznie na serwerach:
+`/root/pre-upgrade-20261009-103357/` na dns2 oraz
+`/root/pre-upgrade-20261009-103710/` na dns1. Archiwa zawierają sekrety;
+nie należy kopiować ich do repozytorium.
+
 Automatyzacja wykonuje rutynowe aktualizacje, ale administrator powinien
 okresowo sprawdzać:
 

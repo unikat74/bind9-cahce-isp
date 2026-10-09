@@ -247,6 +247,25 @@ Jeśli rosną `TcpExtListenOverflows` lub `TcpExtListenDrops`, sprawdź dodatkow
 
 ## Stan bazowy tej instalacji
 
+### Aktualizacja produkcji — 9 października 2026
+
+Na obu resolverach ustawiono `recursive-clients 1500` (próg miękki 1400)
+i `tcp-clients 750`. Na dns1 w poprzedniej dobie wystąpiło 49 przekroczeń
+miękkiego limitu rekursji 900; szczyt rekursji wyniósł 965, a TCP osiągnęło
+limit 500. dns2 otrzymał taki sam zapas na przejęcie ruchu.
+Oba hosty miały około 3 GB dostępnego RAM, a sprawdzone forwardery IPv4/IPv6
+odpowiadały poprawnie. Zmiany wprowadzono kolejno, przez `rndc reconfig`,
+bez restartu procesów i czyszczenia cache. Kopie poprzedniej konfiguracji
+znajdują się na serwerach w `/root/bind-capacity-20261009-102259/` (dns1)
+i `/root/bind-capacity-20261009-102310/` (dns2).
+
+Po zmianie sprawdzono DNS UDP/TCP, DoT/DoH z walidacją TLS oraz IPv6.
+Pełny okres szczytu pozostaje do obserwacji; zwiększenie limitów nie usuwa
+problemów wolnych upstreamów ani błędnych odpowiedzi dla pojedynczych domen.
+Nie zmieniano kolejki TCP ani ochrony przed nadmierną liczbą rekordów.
+
+### Historyczny odbiór — 7 września 2026
+
 Pomiar końcowy wykonany 7 września 2026 po migracji hazardu do RPZ:
 
 | Serwer | Rekursje | Szczyt rekursji | TCP | Szczyt TCP | RAM BIND |
@@ -254,7 +273,7 @@ Pomiar końcowy wykonany 7 września 2026 po migracji hazardu do RPZ:
 | dns1 | 8/900/1000 | 160 | 106/500 | 150 | około 284 MB |
 | dns2 | 0/900/1000 | 40 | 1/500 | 64 | około 195 MB |
 
-Aktualny `tcp-clients 500` daje odpowiedni zapas. Nie zwiększaj go ponownie bez
+Ówczesny `tcp-clients 500` dawał odpowiedni zapas. Nie zwiększaj limitu bez
 nowych pomiarów pokazujących trwałe wykorzystanie co najmniej 70–80%.
 
 Na dns1 systemowe liczniki wykazywały historycznie 331294 przepełnienia i

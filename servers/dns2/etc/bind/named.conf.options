@@ -31,7 +31,9 @@ options {
     send-cookie yes;
 
     // Zapas dla trwalych sesji DNS-over-TLS/DNS-over-HTTPS.
-    tcp-clients 500;
+    tcp-clients 750;
+    // Capacity reviewed 2026-10-09: headroom for recursive query bursts.
+    recursive-clients 1500;
 
 
     // DoT: dns1.example.net, TCP/853

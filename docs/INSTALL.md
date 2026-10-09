@@ -277,10 +277,17 @@ install -d -o bind -g bind -m 750 /var/log/named
 
 W `/etc/bind/named.conf` dodaj jeden blok:
 
+Rotację `security.log` wykonuje codziennie logrotate, zachowując 7 archiwów
+z datą w nazwie. BIND nie ogranicza rozmiaru tego pliku. Skopiuj regułę
+`servers/dns1/etc/logrotate.d/named-security` do `/etc/logrotate.d/named-security`
+(taka sama dla dns2) i sprawdź `systemctl is-active logrotate.timer`.
+Po rotacji `rndc reconfig` ponownie otwiera log bez restartu BIND-a.
+Puste logi nie są rotowane; archiwa są kompresowane z jednodniowym opóźnieniem.
+
 ```conf
 logging {
     channel security_file {
-        file "/var/log/named/security.log" versions 3 size 30m;
+        file "/var/log/named/security.log" size unlimited;
         severity dynamic;
         print-time yes;
     };

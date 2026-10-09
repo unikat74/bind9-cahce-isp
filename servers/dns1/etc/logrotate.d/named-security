@@ -1,0 +1,14 @@
+/var/log/named/security.log {
+    daily
+    rotate 7
+    missingok
+    notifempty
+    compress
+    delaycompress
+    dateext
+    create 0644 bind bind
+    sharedscripts
+    postrotate
+        /usr/sbin/rndc reconfig
+    endscript
+}
