@@ -422,6 +422,15 @@ generatorze (`145.237.235.240`), a drugie `NXDOMAIN`. Test powtórz na dns2.
 
 ## 11. Fail2Ban
 
+SSH ma osobne jaile IPv4 i IPv6, z dotychczasowymi czasami banowania.
+`sshd` jawnie uwzględnia `sshd-session`, nadpisując węższy domyślny
+`journalmatch` Debiana. Polecenia `ignorecommand` rozdzielają rodziny IP;
+nie używaj w nich średników (parser INI może uciąć polecenie).
+Oba jaile dziedziczą administracyjną listę `ignoreip` z DEFAULT.
+Filtr DNS IPv4 używa `<IP4>`, a IPv6 osobnego filtra, bez podwójnych banów.
+Samo `fail2ban-client -t` nie sprawdza wykonania akcji: po wdrożeniu
+porównaj listy banów z zestawami nftables i sprawdź logi błędów.
+
 Pliki przykładowe są w `servers/dns*/etc/fail2ban/`. Najpierw wpisz własne
 adresy administracyjne w `ignoreip`, następnie:
 

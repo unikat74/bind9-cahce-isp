@@ -17,7 +17,11 @@ enabled = true
 backend = systemd
 port = ssh
 filter = sshd
+journalmatch = _SYSTEMD_UNIT=ssh.service + _COMM=sshd + _COMM=sshd-session
 
+
+# Count IPv4 only; the separate IPv6 jail retains its own ban policy.
+ignorecommand = /usr/bin/python3 -c "exit(':' not in '<ip>')"
 
 [sshd-ip6]
 enabled = true
@@ -35,5 +39,5 @@ bantime.increment = true
 bantime.factor = 2
 bantime.maxtime = 7d
 
-ignoreip = ::1
-ignorecommand = /bin/sh -c 'case "<ip>" in *:*) exit 1 ;; *) exit 0 ;; esac'
+# Inherit the administrative allowlist from DEFAULT.
+ignorecommand = /usr/bin/python3 -c "exit(':' in '<ip>')"
