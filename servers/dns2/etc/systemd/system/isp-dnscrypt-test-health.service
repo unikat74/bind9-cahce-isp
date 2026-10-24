@@ -1,0 +1,20 @@
+[Unit]
+Description=DNSCrypt certificate rotation and persistence check (isp-dnscrypt-test)
+After=network-online.target isp-dnscrypt-test.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/check-dnscrypt-renewal --config /etc/isp-dnscrypt-test.toml --provider-key /etc/isp-dnscrypt-test.provider-key
+TimeoutStartSec=40
+User=root
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+MemoryMax=128M
+TasksMax=16

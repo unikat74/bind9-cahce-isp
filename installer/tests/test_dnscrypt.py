@@ -50,6 +50,10 @@ class DNSCryptInstallerTest(unittest.TestCase):
             self.assertNotIn("flush ruleset", nft)
             self.assertIn("counter drop", nft)
             self.assertIn(f"Requires={instance}-firewall.service", rendered[f"etc/systemd/system/{instance}.service"])
+            self.assertEqual(len(rendered), 8)
+            self.assertIn(f"/etc/{instance}.provider-key", rendered[f"etc/systemd/system/{instance}-health.service"])
+            self.assertIn("OnCalendar=*:0/15", rendered[f"etc/systemd/system/{instance}-health.timer"])
+            self.assertIn("--initialize-pin", rendered["usr/local/sbin/check-dnscrypt-renewal"])
 
     def test_bind_parser_rejects_symbolic_or_duplicate_acls(self):
         for text in ('acl "klienci_sieci" { any; };',

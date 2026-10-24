@@ -40,7 +40,7 @@ z [INSTALL.md](INSTALL.md). Dla nowego systemu zacznij od
 wykonuj w jego katalogu głównym, po jednym resolverze naraz.
 
 ```sh
-apt install python3 bind9-utils dnsutils knot-dnsutils nftables fail2ban ca-certificates
+apt install python3 python3-cryptography bind9-utils dnsutils knot-dnsutils nftables fail2ban ca-certificates
 cp installer/dnscrypt.toml.example installer/dnscrypt.toml
 editor installer/dnscrypt.toml
 DNSCRYPT_INSTANCE=isp-dnscrypt
@@ -68,8 +68,9 @@ bez roota, na Pythonie 3.11 lub nowszym:
 python3 installer/bootstrap-dnscrypt.py installer/dnscrypt.toml --output /tmp/dnscrypt-generated
 ```
 
-Katalog wyjściowy nie może wcześniej istnieć. Zawiera drzewo `etc/` z pięcioma
-plikami: konfiguracją, firewallem, dwiema jednostkami i portami Fail2Ban.
+Katalog wyjściowy nie może wcześniej istnieć. Zawiera osiem plików w drzewach
+`etc/` i `usr/`: konfigurację, firewall, jednostki usługi i kontroli rotacji,
+porty Fail2Ban oraz skrypt kontrolny.
 Przejrzyj je przed instalacją. Tryb `--output` nie pobiera programu,
 nie modyfikuje usług ani kluczy.
 
@@ -269,9 +270,86 @@ Oba RPZ pozostają w BIND. Nie deklarujemy braku filtrowania/logów.
 Hostowy DROP chroni proces przed obcymi źródłami, ale nie usuwa kosztu
 odbioru pakietów ani zajęcia łącza — to wymaga filtrowania na routerze.
 
+### Kontrola rotacji i trwałości stanu
+
+`encrypted-dns-server` 0.9.22 rotuje certyfikaty co 8 godzin; ich ważność
+wynosi 24 godziny. Błąd asynchronicznego zapisu stanu może zostać zignorowany
+przez program. Dlatego od 14 września dodatkowa kontrola działa na obu
+resolverach co 15 minut, z losowym opóźnieniem do 30 sekund.
+
+`check-dnscrypt-renewal` sprawdza:
+
+- wiek pliku stanu i datę najnowszej rotacji (maksymalnie 10 godzin);
+- co najmniej 12 godzin ważności najnowszego certyfikatu;
+- zgodność klucza providera z niezależnym plikiem publicznej tożsamości;
+- podpisy Ed25519 oraz zgodność ważnych certyfikatów na dysku i w odpowiedziach
+  UDP/TCP każdego skonfigurowanego adresu, także IPv6.
+
+Nie zmienia stanu ani kluczy i nie restartuje resolvera. W razie błędu
+powtarza odczyt po 2 sekundach, aby nie alarmować podczas krótkiego okna
+asynchronicznej rotacji. Nie wykonuje pełnego szyfrowanego zapytania do BIND:
+to kontrola certyfikatów i zapisu, a nie pełny test dostępności rekurencji.
+
+Nowy instalator uruchamia kontrolę automatycznie. Tworzy publiczny pin
+`/etc/INSTANCE.provider-key` dopiero po sprawdzeniu stanu i odpowiedzi usługi;
+istniejącego pliku nigdy nie nadpisuje. Przy nieudanej instalacji zachowuje
+pin wraz ze stanem do diagnostyki.
+
+Na istniejącym hoście, po ustawieniu `DNSCRYPT_INSTANCE` jak wyżej:
+
+```sh
+apt install python3-cryptography
+install -m 755 scripts/check-dnscrypt-renewal /usr/local/sbin/check-dnscrypt-renewal
+for suffix in service timer; do
+  sed "s/@INSTANCE@/$DNSCRYPT_INSTANCE/g" "systemd/isp-dnscrypt-health.$suffix.in" > "/etc/systemd/system/$DNSCRYPT_INSTANCE-health.$suffix"
+done
+# Pierwsze uruchomienie: utwórz pin tylko gdy go nie ma.
+# Dla istniejącej instalacji porównaj publiczny klucz z dotychczasowym stampem klientów.
+/usr/local/sbin/check-dnscrypt-renewal --config "/etc/$DNSCRYPT_INSTANCE.toml" --provider-key "/etc/$DNSCRYPT_INSTANCE.provider-key" --initialize-pin
+systemd-analyze verify "/etc/systemd/system/$DNSCRYPT_INSTANCE-health.service" "/etc/systemd/system/$DNSCRYPT_INSTANCE-health.timer"
+systemctl daemon-reload
+systemctl start "$DNSCRYPT_INSTANCE-health.service"
+systemctl enable --now "$DNSCRYPT_INSTANCE-health.timer"
+```
+
+Podczas kolejnej aktualizacji pomiń `--initialize-pin`; zachowaj dotychczasowy
+plik publicznego klucza. Nie twórz nowego pina w odpowiedzi na alarm zmiany
+tożsamości. Na produkcji wykorzystano wcześniej zweryfikowane klucze publiczne.
+
+```sh
+systemctl list-timers "$DNSCRYPT_INSTANCE-health.timer"
+systemctl show "$DNSCRYPT_INSTANCE-health.service" -p Result -p ExecMainStatus
+journalctl -u "$DNSCRYPT_INSTANCE-health.service" --since today
+systemctl --failed
+```
+
+Błąd daje wpis `CRITICAL DNSCrypt`, kod wyjścia 1 i stan `failed` jednostki
+kontrolnej. Kolejne poprawne wykonanie przywraca wynik `success`; historia
+pozostaje w journalu. To **lokalny alarm**, bez wysyłki maila/SMS. Zewnętrzny
+monitoring powinien zbierać wynik i sprawdzać również świeżość wykonania oraz
+aktywność timera. Wyłączony timer sam nie zgłosi swojego braku działania.
+
+Po alarmie zapisu sprawdź miejsce/inody, prawa katalogu stanu, system plików,
+czas hosta i logi usługi. Nie restartuj jej pochopnie z nieaktualnym stanem;
+zachowaj chronioną kopię do diagnostyki. Pin jest publiczny, lecz stan zawiera
+klucze prywatne. Żaden z tych plików nie jest generowany do repozytorium.
+
+Walidacja wdrożenia: oba serwery przeszły kontrolę wszystkich lokalnych
+listenerów UDP/TCP IPv4/IPv6; usługi DNS pozostały aktywne bez restartu.
+Testy automatyczne obejmują stan stary, brak rotacji mimo odświeżenia mtime,
+wygaśnięcie, krótki termin ważności, zmianę providera, błędny podpis,
+rozbieżność odpowiedzi ze stanem i ucięte odpowiedzi DNS.
+14 września potwierdzono rotację na dns2 o 06:46 i dns1 o 06:56 CEST:
+nowe certyfikaty zostały zapisane i są podawane klientom. Testy szyfrowanych
+zapytań UDP/TCP przez IPv4/IPv6 przeszły na obu serwerach, w tym odrzucenie
+błędnego DNSSEC. Stan zachowuje również starsze certyfikaty, dlatego
+kontrola wymaga podawania najnowszego zapisanego certyfikatu oraz tego, aby
+każdy podawany certyfikat był zapisany; nie wymaga publikowania całej historii.
+
 ## 7. Wycofanie
 
 ```sh
+systemctl disable --now "$DNSCRYPT_INSTANCE-health.timer"
 systemctl disable --now "$DNSCRYPT_INSTANCE"
 systemctl disable --now "$DNSCRYPT_INSTANCE-firewall"
 ```

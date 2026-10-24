@@ -1,0 +1,12 @@
+[Unit]
+Description=Check DNSCrypt certificate rotation every 15 minutes (isp-dnscrypt)
+
+[Timer]
+OnBootSec=2min
+OnCalendar=*:0/15
+RandomizedDelaySec=30
+Persistent=true
+Unit=isp-dnscrypt-health.service
+
+[Install]
+WantedBy=timers.target

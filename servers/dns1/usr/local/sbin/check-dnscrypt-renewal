@@ -1,0 +1,184 @@
+#!/usr/bin/python3
+"""Read-only encrypted-dns-server 0.9.22 certificate/persistence watchdog."""
+import argparse
+import ipaddress
+import os
+from pathlib import Path
+import socket
+import struct
+import sys
+import time
+import tomllib
+from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
+
+
+class HealthError(Exception):
+    pass
+
+
+def require(condition, message):
+    if not condition:
+        raise HealthError(message)
+
+
+def certificate(raw, key, now):
+    require(len(raw) == 124 and raw[:8] == b'DNSC\x00\x02\x00\x00', 'unsupported certificate format')
+    try:
+        Ed25519PublicKey.from_public_bytes(key).verify(raw[8:72], raw[72:])
+    except Exception:
+        raise HealthError('certificate signature does not match pinned provider') from None
+    _, start, end = struct.unpack('!III', raw[112:124])
+    require(start <= now + 60 and end > start, 'invalid certificate dates or system clock')
+    return start, end
+
+
+def disk_state(path, key, now):
+    stat = path.stat()
+    require(-60 <= now - stat.st_mtime <= 36000, 'state file not saved for 10h or clock incorrect')
+    state = tomllib.loads(path.read_text())
+    require(bytes(state['provider_kp']['pk']) == key, 'provider identity differs from pinned public key')
+    certs = set()
+    for params in state['dnscrypt_encryption_params_set']:
+        cert = params['dnscrypt_cert']
+        raw = b''.join(bytes(cert[k]) for k in ('cert_magic', 'es_version', 'minor_version', 'signature'))
+        raw += b''.join(bytes(cert['inner'][k]) for k in ('resolver_pk', 'client_magic', 'serial', 'ts_start', 'ts_end'))
+        start, end = certificate(raw, key, now)
+        if end > now:
+            certs.add(raw)
+    require(certs, 'no valid certificate in state')
+    dates = [certificate(c, key, now) for c in certs]
+    require(now - max(start for start, end in dates) <= 36000, 'no certificate rotation for 10h')
+    require(max(end for start, end in dates) - now >= 43200, 'newest certificate expires in less than 12h')
+    return certs
+
+
+def skip_name(data, pos):
+    for _ in range(128):
+        require(pos < len(data), 'truncated DNS name')
+        size = data[pos]
+        if size == 0:
+            return pos + 1
+        if size & 192 == 192:
+            require(pos + 1 < len(data), 'truncated DNS pointer')
+            return pos + 2
+        require(size <= 63 and pos + 1 + size <= len(data), 'invalid DNS label')
+        pos += 1 + size
+    raise HealthError('DNS name too long')
+
+
+def parse_response(data, query_id):
+    require(len(data) >= 12, 'short DNS response')
+    ident, flags, questions, answers, _, _ = struct.unpack('!6H', data[:12])
+    require(ident == query_id and flags & 0x8000 and not flags & 0x020f, 'invalid/truncated DNS response or server error')
+    require(questions == 1 and 0 < answers <= 32, 'unexpected DNS answer count')
+    pos = skip_name(data, 12) + 4
+    certs = set()
+    for _ in range(answers):
+        pos = skip_name(data, pos)
+        require(pos + 10 <= len(data), 'short DNS record')
+        kind, cls, _, length = struct.unpack('!HHIH', data[pos:pos + 10])
+        pos += 10
+        require(pos + length <= len(data), 'truncated DNS record')
+        record = data[pos:pos + length]
+        pos += length
+        if kind != 16 or cls != 1:
+            continue
+        raw, off = b'', 0
+        while off < len(record):
+            size = record[off]
+            require(off + 1 + size <= len(record), 'truncated TXT segment')
+            raw += record[off + 1:off + 1 + size]
+            off += 1 + size
+        certs.add(raw)
+    require(certs, 'no DNSCrypt TXT certificates returned')
+    return certs
+
+
+def receive(sock, length):
+    data = b''
+    while len(data) < length:
+        part = sock.recv(length - len(data))
+        require(part, 'short TCP response')
+        data += part
+    return data
+
+
+def query(address, provider, tcp):
+    # Configuration contains IP literals; no external name resolution is needed.
+    ip, port = address.rsplit(':', 1)
+    ip = ipaddress.ip_address(ip.strip('[]'))
+    ident = int.from_bytes(os.urandom(2), 'big')
+    name = '2.dnscrypt-cert.' + provider
+    packet = struct.pack('!6H', ident, 256, 1, 0, 0, 0)
+    packet += b''.join(bytes([len(label)]) + label.encode('ascii') for label in name.split('.'))
+    packet += b'\x00\x00\x10\x00\x01'
+    with socket.socket(socket.AF_INET6 if ip.version == 6 else socket.AF_INET,
+                       socket.SOCK_STREAM if tcp else socket.SOCK_DGRAM) as sock:
+        sock.settimeout(2)
+        sock.connect((str(ip), int(port)))
+        if tcp:
+            sock.sendall(struct.pack('!H', len(packet)) + packet)
+            data = receive(sock, struct.unpack('!H', receive(sock, 2))[0])
+        else:
+            sock.send(packet)
+            data = sock.recv(8192)
+    return parse_response(data, ident)
+
+
+def check(config, key):
+    now = time.time()
+    certs = disk_state(Path(config['state_file']), key, now)
+    for listener in config['listen_addrs']:
+        address = listener['local']
+        for tcp in (False, True):
+            try:
+                served = query(address, config['dnscrypt']['provider_name'], tcp)
+                valid = {c for c in served if certificate(c, key, now)[1] > now}
+                require(valid and valid <= certs, 'served certificates differ from persisted state')
+                newest = max(certificate(c, key, now)[0] for c in certs)
+                require(max(certificate(c, key, now)[0] for c in valid) == newest,
+                        'newest persisted certificate is not being served')
+            except (OSError, HealthError) as error:
+                raise HealthError(f'{address} {"TCP" if tcp else "UDP"}: {error}') from None
+    return max(certificate(c, key, now)[1] for c in certs) - now
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--config', type=Path, required=True)
+    parser.add_argument('--provider-key', type=Path, required=True)
+    parser.add_argument('--initialize-pin', action='store_true', help='Fresh install only: verify state/listeners, exclusively create public identity pin')
+    args = parser.parse_args()
+    try:
+        config = tomllib.loads(args.config.read_text())
+        if args.initialize_pin:
+            state = tomllib.loads(Path(config['state_file']).read_text())
+            key = bytes(state['provider_kp']['pk'])
+        else:
+            key = bytes.fromhex(args.provider_key.read_text().strip())
+        require(len(key) == 32, 'invalid public provider key')
+        # Retry once: renewal publishes state and live certificates asynchronously.
+        for attempt in range(2):
+            try:
+                remaining = check(config, key)
+                break
+            except (OSError, HealthError, ValueError, KeyError):
+                if attempt:
+                    raise
+                time.sleep(2)
+        if args.initialize_pin:
+            with args.provider_key.open('x') as output:
+                output.write(key.hex() + '\n')
+            args.provider_key.chmod(0o644)
+        print(f'OK DNSCrypt: provider pinned, UDP/TCP listeners verified, state persisted, newest certificate valid for {remaining / 3600:.1f}h')
+        return 0
+    except HealthError as error:
+        print(f'CRITICAL DNSCrypt: {error}', file=sys.stderr)
+    except Exception as error:
+        # Never print TOML/parser exception contents: the state includes private keys.
+        print(f'CRITICAL DNSCrypt: cannot complete check ({type(error).__name__}); inspect file access, configuration and dependencies', file=sys.stderr)
+    return 1
+
+
+if __name__ == '__main__':
+    sys.exit(main())

@@ -10,6 +10,7 @@ installer/inventory.env
 *.pem
 *.cert
 *.pub
+*.provider-key
 encrypted-dns.state*
 installer/dnscrypt.toml
 

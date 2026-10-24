@@ -87,6 +87,9 @@ def render(config):
         f"etc/nftables.d/{instance}.nft": firewall,
         f"etc/systemd/system/{instance}.service": template("systemd/isp-dnscrypt.service.in"),
         f"etc/systemd/system/{instance}-firewall.service": template("systemd/isp-dnscrypt-firewall.service.in"),
+        f"etc/systemd/system/{instance}-health.service": template("systemd/isp-dnscrypt-health.service.in"),
+        f"etc/systemd/system/{instance}-health.timer": template("systemd/isp-dnscrypt-health.timer.in"),
+        "usr/local/sbin/check-dnscrypt-renewal": (ROOT / "scripts/check-dnscrypt-renewal").read_text(),
         "etc/fail2ban/jail.d/zz-dnscrypt-ports.local": jail,
     }
 
@@ -106,6 +109,7 @@ def preflight(config, files):
     if not re.search(r'^ID=debian$', release, re.M) or not re.search(r'^VERSION_ID="?13"?$', release, re.M):
         raise ValueError("Supported platform: Debian 13")
     run("named-checkconf")
+    run("/usr/bin/python3", "-c", "from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey")
     if bind_acl(Path("/etc/bind/named.conf.options").read_text()) != validate(config):
         raise ValueError("Inventory ACL differs from BIND; no changes made")
     local = {a["local"] for link in json.loads(run("ip", "-j", "address", "show")) for a in link.get("addr_info", [])}
@@ -133,6 +137,9 @@ def install(config, files):
         raise ValueError("DNSCrypt already installed. Use --check and the documented update procedure; preserve state/provider.")
     targets = [Path("/") / path for path in files]
     state = Path(f"/var/lib/{instance}")
+    pin = Path(f"/etc/{instance}.provider-key")
+    if pin.exists():
+        raise ValueError("Existing provider identity pin; refusing to overwrite")
     if any(p.exists() for p in targets) or state.exists() or Path(f"/opt/{instance}").exists():
         raise ValueError("Existing files/state found; refusing to overwrite")
     tables = run("nft", "list", "tables")
@@ -166,21 +173,25 @@ def install(config, files):
             target = Path("/") / relative
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_text(content)
-            target.chmod(0o644)
+            target.chmod(0o755 if relative.startswith("usr/local/sbin/") else 0o644)
         run("fail2ban-client", "-t")
         run("systemd-analyze", "verify", f"/etc/systemd/system/{instance}.service")
         run("systemctl", "daemon-reload")
         run("systemctl", "start", instance)
         run("systemctl", "is-active", instance)
+        run("/usr/local/sbin/check-dnscrypt-renewal", "--config", f"/etc/{instance}.toml",
+            "--provider-key", str(pin), "--initialize-pin")
+        run("systemctl", "start", instance + "-health.service")
         for jail in JAILS:
             run("fail2ban-client", "reload", "--restart", jail)
             remaining = set(run("fail2ban-client", "get", jail, "banip").split())
             if bans[jail] - remaining:
                 raise ValueError(f"Ban list changed in {jail}; inspect {backup}")
         run("systemctl", "enable", instance, instance + "-firewall")
+        run("systemctl", "enable", "--now", instance + "-health.timer")
     except Exception:
         # Only remove files created by this fresh install. Provider state is retained.
-        subprocess.run(["systemctl", "disable", "--now", instance, instance + "-firewall"], capture_output=True)
+        subprocess.run(["systemctl", "disable", "--now", instance + "-health.timer", instance, instance + "-firewall"], capture_output=True)
         for target in targets:
             target.unlink(missing_ok=True)
         subprocess.run(["systemctl", "daemon-reload"], capture_output=True)
