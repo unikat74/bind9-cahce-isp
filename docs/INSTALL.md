@@ -338,6 +338,14 @@ oraz tworzy `named.conf.rpz` i `named.conf.rpz-options`. Nie włącza timerów p
 walidacją całej konfiguracji. Starsza nazwa `bootstrap-threatfox-rpz.sh`
 pozostaje jedynie zgodnym wrapperem.
 
+Aktualizator pomija pojedyncze rekordy QNAME, które po dodaniu sufiksu RPZ
+przekraczają limit DNS 255 bajtów lub limit etykiety 63 bajtów. Zapisuje
+ostrzeżenie z numerem wiersza i podsumowanie liczby pominięć w journalu.
+Takie wpisy nie są blokowane przez tę listę; pozostałe nadal się aktualizują.
+Cały wynik musi przejść `named-checkzone` przed atomową podmianą pliku.
+Inne błędy walidacji zachowują poprzednią strefę i są widoczne w journalu:
+`journalctl -u threatfox-rpz.service`.
+
 W `named.conf.local` dodaj:
 
 ```conf
