@@ -398,21 +398,16 @@ aktualizują się przez NOTIFY oraz transfer ze stref primary na dns1.
 
 ## 10. Test polityk RPZ
 
-`policy disabled log yes` wykrywa IOC, ale nie blokuje. Wykonaj zapytanie do
-domeny obecnej w aktualnym feedzie i sprawdź:
+ThreatFox działa z `policy nxdomain log yes` na obu resolverach. Dla domeny
+obecnej w aktualnym feedzie oczekuj NXDOMAIN dla A i AAAA oraz wpisu
+`rpz QNAME NXDOMAIN rewrite` w `/var/log/named/security.log`.
+Testuj również zapytania z `+dnssec` i zwykłą domenę spoza listy.
 
-```sh
-tail -n 30 /var/log/named/security.log
-```
-
-Oczekiwany wpis zawiera:
-
-```text
-disabled rpz QNAME NXDOMAIN rewrite ... via ...rpz.threatfox.abuse.ch
-```
-
-Normalna odpowiedź A jest prawidłowa w audycie. Zmiana na `policy given`
-włącza realne akcje zapisane w feedzie i powinna nastąpić dopiero po analizie.
+`break-dnssec yes` pozwala stosować RPZ także do podpisanych odpowiedzi przy
+DO=1. Nie wyłącza walidacji pozostałych domen; zmodyfikowana odpowiedź nie
+ma jednak poprawnego podpisu DNSSEC dla niezależnego walidatora klienta.
+Powrót do audytu: `policy disabled log yes` dla ThreatFox i przeładowanie
+konfiguracji po `named-checkconf`.
 
 Hazard działa w trybie blokowania (`policy given`). Wybierz aktualną domenę z
 pliku strefy na dns1 i sprawdź ją oraz losową subdomenę:

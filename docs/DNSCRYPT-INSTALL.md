@@ -232,8 +232,8 @@ ukryć awarię jednego z nich. Wymagane: poprawne pobranie certyfikatu i
 zapytania, AD dla poprawnego DNSSEC, SERVFAIL dla błędnego DNSSEC.
 
 Sprawdź aktualną domenę hazardową, jej niezdefiniowaną subdomenę i wpis
-ThreatFox z aktywnego feedu. Potwierdź odpowiednie logi RPZ, także
-`disabled rpz`; sam NOERROR/NXDOMAIN nie jest dowodem trafienia w RPZ.
+ThreatFox z aktywnego feedu (NXDOMAIN). Potwierdź odpowiednie logi RPZ;
+sam NOERROR/NXDOMAIN nie jest dowodem trafienia w RPZ.
 Następnie sprawdź dotychczasowe DNS UDP/TCP, DoT/DoH i DoQ w obu rodzinach.
 
 Z adresu **spoza ACL** sprawdź UDP/TCP 8443, IPv4/IPv6: timeout i wzrost

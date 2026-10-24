@@ -1,5 +1,5 @@
-// Tryb audytu: wykrywa IOC, nie zmienia odpowiedzi klienta.
+// ThreatFox: NXDOMAIN for all matching records; hazard keeps feed actions.
 response-policy {
-    zone "rpz.threatfox.abuse.ch" policy disabled log yes;
+    zone "rpz.threatfox.abuse.ch" policy nxdomain log yes;
     zone "rpz.hazard.mf.gov.pl" policy given log yes;
-};
+} break-dnssec yes;

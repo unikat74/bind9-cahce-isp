@@ -39,7 +39,7 @@ dig @127.0.0.1 qaqfaxian.com A
 tail -f /var/log/named/security.log | grep --line-buffered 'rpz'
 ```
 
-Dla ThreatFox oczekuj w logu `disabled rpz` bez zmiany odpowiedzi. Dla domeny
+Dla ThreatFox oczekuj NXDOMAIN i wpisu `rpz QNAME NXDOMAIN rewrite`. Dla domeny
 obecnej w rejestrze MF oczekuj adresu przekierowania `145.237.235.240`, a dla
 jej niezdefiniowanej subdomeny — `NXDOMAIN`.
 

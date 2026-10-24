@@ -269,7 +269,7 @@ Transfer status: success
 TSIG threatfox-rpz-xfr
 ```
 
-Zostaw `policy disabled log yes` dla ThreatFox przez okres obserwacji. Rejestr
+ThreatFox używa `policy nxdomain log yes` i zwraca NXDOMAIN dla trafień. Rejestr
 hazardowy używa `policy given` i aktywnie zwraca adres przekierowania lub
 NXDOMAIN zgodnie z regułami strefy.
 

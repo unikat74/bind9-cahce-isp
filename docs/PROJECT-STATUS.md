@@ -25,7 +25,7 @@ dnsdist 2.1.2 i 2.0.9. Wyniki: `DOQ-DNSCRYPT-TESTS.md`.
 - klasyczny DNS na UDP/TCP 53;
 - DoT na TCP 853 oraz natywny DoH/HTTP/2 na TCP 443;
 - certyfikaty Let's Encrypt z automatycznym, walidowanym deploy-hookiem;
-- ThreatFox RPZ primary/secondary przez TSIG, w trybie audytu;
+- ThreatFox RPZ primary/secondary przez TSIG, aktywne blokowanie NXDOMAIN;
 - rejestr hazardowy MF jako jedna aktywna RPZ primary/secondary;
 - bezpieczne pobieranie, IDNA2008/UTS #46, walidacja i atomowa podmiana stref;
 - Fail2Ban/nftables dla DNS, DoT, DoH, DoQ i SSH w IPv4 oraz IPv6
@@ -58,8 +58,10 @@ pobiera feedów samodzielnie — odbiera obie strefy przez transfer TSIG.
 
 ## Zaakceptowane ograniczenia
 
-- ThreatFox pozostaje w trybie `policy disabled log yes`: wykrywa IOC, ale nie
-  zmienia odpowiedzi DNS.
+- ThreatFox od 24 października 2026 działa z `policy nxdomain log yes` na obu
+  resolverach. `break-dnssec yes` obejmuje również zapytania z DO=1; odpowiedzi
+  zmienione przez RPZ nie mogą być zweryfikowane przez niezależny walidator DNSSEC.
+  Pozostałe domeny nadal podlegają walidacji DNSSEC.
 - RouterOS 6.49.x/TILE nie jest wspierany jako bezpośredni klient natywnego DoH
   BIND-a; korzysta z DNS/53. Szczegóły zawiera `CLIENT-COMPATIBILITY.md`.
 - RPZ chroni tylko klientów korzystających z resolverów operatora; nie blokuje
