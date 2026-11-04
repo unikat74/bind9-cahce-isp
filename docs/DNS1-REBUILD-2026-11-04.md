@@ -124,3 +124,26 @@ Antyhazard IDN i walidacja DNSSEC nadal działają. Pominięto jeden rekord
 feedu przekraczający limit nazwy DNS (256 bajtów); pozostała strefa przeszła
 named-checkzone. Instrukcja aktywacji:
 [DNS-EXTENSIONS-INSTALL.md](DNS-EXTENSIONS-INSTALL.md).
+
+## Pełne frontendy na dns1 — uzupełnienie tego samego dnia
+
+Dołączono DoQ i DNSCrypt, zgodnie z nowym instalatorem, bez restartu hosta:
+
+- DoQ: `quic://dns1.cybermax.pl:853`, UDP 853 po IPv4 i IPv6,
+  dnsdist 2.1.3 z oficjalnego repozytorium PowerDNS, backend PROXYv2 5300.
+- DNSCrypt: UDP/TCP `193.192.179.11:8443` i `[2001:67c:660::53]:8443`,
+  provider `2.dnscrypt-cert.dns1.cybermax.pl`, instancja `isp-dnscrypt` 0.9.22.
+- Autostart obu frontendów/firewalli i kontrola certyfikatów DNSCrypt co 15 min.
+- Dotychczasowe DoT 853/TCP i DoH 443/TCP pozostają aktywne.
+- ACL zawiera wszystkie cztery sieci DNS, w tym `10.0.0.0/20`.
+
+Z dns2 przetestowano wszystkie pięć protokołów resolvera oraz DNSCrypt
+UDP/TCP po IPv4 i IPv6. Potwierdzono zwykłe odpowiedzi, NXDOMAIN ThreatFox,
+antyhazard IDN i SERVFAIL dla błędnego DNSSEC. Brak failed units; listy banów
+jaili DNS nie zawierają klientów prywatnych. Tabela Fail2Ban może nie istnieć,
+gdy nie było jeszcze bana po restarcie jaili — jest tworzona na żądanie.
+
+Publiczne stampy: `journalctl -u isp-dnscrypt`; klucze i stan pozostają
+na dns1. Kopie: `/root/pre-dns1-extensions/`, `/root/doq-install-ttuxm943`,
+`/root/dnscrypt-install-n2adk7l4`. Test klienta z dns2 zapisano tam jako
+`/root/test-dns1-dnscrypt-peer.py`.

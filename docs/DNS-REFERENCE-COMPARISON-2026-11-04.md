@@ -27,8 +27,8 @@ dns1 `193.192.179.11`, dns2 `193.192.179.12`.
 ## Stan po uzupełnieniu dns2
 
 Powyższa tabela opisuje porównanie przed uzupełnieniem frontendów.
-Na dns2 wdrożono potem DoQ i DNSCrypt; na dns1 nie rozszerzano frontendów
-w tym etapie. Oba nowe hosty mają dodatkową sieć DNS `10.0.0.0/20`.
+Na dns2 wdrożono potem DoQ i DNSCrypt; następnie uruchomiono te same
+frontendy na dns1. Na obu hostach przeszły testy IPv4/IPv6, DNSSEC i RPZ. Oba nowe hosty mają dodatkową sieć DNS `10.0.0.0/20`.
 ThreatFox aktywowano: dns1 pobiera feed z osobnym Auth-Key, dns2 replikuje
 strefę przez TSIG. Potwierdzono zgodne seriale i NXDOMAIN na obu hostach. Aktualne kroki: [DNS-EXTENSIONS-INSTALL.md](DNS-EXTENSIONS-INSTALL.md).
 
