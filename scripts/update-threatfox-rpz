@@ -10,7 +10,8 @@ TMP="$(mktemp /etc/bind/rpz/threatfox.rpz.new.XXXXXX)"
 URL="https://threatfox-api.abuse.ch/v2/files/exports/${THREATFOX_AUTH_KEY}/threatfox.rpz"
 trap 'rm -f "$TMP"' EXIT
 
-/usr/bin/curl --fail --silent --show-error --location "$URL" --output "$TMP"
+/usr/bin/curl --fail --silent --show-error --location --proto "=https" --proto-redir "=https" \
+  --connect-timeout 10 --max-time 120 "$URL" --output "$TMP"
 grep -q 'SOA' "$TMP"
 # ThreatFox QNAME triggers are relative to the RPZ origin. A valid domain
 # can therefore exceed the DNS wire limit once the zone suffix is appended.

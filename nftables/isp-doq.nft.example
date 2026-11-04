@@ -1,8 +1,7 @@
 # TEMPLATE: replace documentation prefixes with the complete BIND client ACL.
 # Match dnsdist setACL as well. Never use a default route as a client prefix.
 # Own table only; applying this file is one atomic nftables transaction.
-add table inet isp_doq
-flush table inet isp_doq
+destroy table inet isp_doq
 table inet isp_doq {
     set clients4 {
         type ipv4_addr

@@ -277,29 +277,17 @@ install -d -o bind -g bind -m 750 /var/log/named
 
 W `/etc/bind/named.conf` dodaj jeden blok:
 
-Rotację `security.log` wykonuje codziennie logrotate, zachowując 7 archiwów
-z datą w nazwie. BIND nie ogranicza rozmiaru tego pliku. Skopiuj regułę
-`servers/dns1/etc/logrotate.d/named-security` do `/etc/logrotate.d/named-security`
-(taka sama dla dns2) i sprawdź `systemctl is-active logrotate.timer`.
-Po rotacji `rndc reconfig` ponownie otwiera log bez restartu BIND-a.
-Puste logi nie są rotowane; archiwa są kompresowane z jednodniowym opóźnieniem.
-
-```conf
-logging {
-    channel security_file {
-        file "/var/log/named/security.log" size unlimited;
-        severity dynamic;
-        print-time yes;
-    };
-    category security { security_file; };
-    category rpz { security_file; };
-};
-```
+Nową ochronę DNS instaluj według
+[DNS-EXTENSIONS-INSTALL.md](DNS-EXTENSIONS-INSTALL.md), sekcja 1.
+Instalator tworzy `/etc/bind/named.conf.logging`: osobne `security.log`
+dla Fail2Ban i `rpz.log` dla polityk, z rotacją BIND 20 MiB / 5 archiwów.
+Nie dodawaj drugiego bloku logging ani równoległego logrotate dla tych plików.
+Starsze wdrożenia z unlimited/logrotate wymagają scalenia konfiguracji.
 
 ```sh
-named-checkconf && systemctl reload named
-tail -f /var/log/named/security.log
+named-checkconf
 journalctl -u named -f
+tail -f /var/log/named/security.log /var/log/named/rpz.log
 ```
 
 ## 8. RPZ ThreatFox i hazard na dns1
@@ -422,26 +410,22 @@ generatorze (`145.237.235.240`), a drugie `NXDOMAIN`. Test powtórz na dns2.
 
 ## 11. Fail2Ban
 
-SSH ma osobne jaile IPv4 i IPv6, z dotychczasowymi czasami banowania.
-`sshd` jawnie uwzględnia `sshd-session`, nadpisując węższy domyślny
-`journalmatch` Debiana. Polecenia `ignorecommand` rozdzielają rodziny IP;
-nie używaj w nich średników (parser INI może uciąć polecenie).
-Oba jaile dziedziczą administracyjną listę `ignoreip` z DEFAULT.
-Filtr DNS IPv4 używa `<IP4>`, a IPv6 osobnego filtra, bez podwójnych banów.
-Samo `fail2ban-client -t` nie sprawdza wykonania akcji: po wdrożeniu
-porównaj listy banów z zestawami nftables i sprawdź logi błędów.
+Dla nowej instalacji wymagane są cztery jaile DNS: UDP/TCP × IPv4/IPv6.
+Wykonaj [DNS-EXTENSIONS-INSTALL.md](DNS-EXTENSIONS-INSTALL.md), sekcja 1,
+z pełną listą sieci klientów. Instalator nie zmienia SSH ani jego banów.
+Starsze snapshoty pokazują osobne jaile SSH IPv4/IPv6; na nowym Debianie
+można zachować pojedynczy jail systemowy SSH obsługujący obie rodziny.
 
-Pliki przykładowe są w `servers/dns*/etc/fail2ban/`. Najpierw wpisz własne
-adresy administracyjne w `ignoreip`, następnie:
+Filtry DNS rozdzielają IPv4 i IPv6, nie liczą zdarzeń RPZ. Przy zmianie ACL
+samo przeładowanie ignoreip nie usuwa wcześniejszych banów — nowy instalator
+usuwa tylko bany DNS dla wskazanych zaufanych klientów. Zawsze sprawdź listy
+banów oraz zestawy nftables, nie tylko `fail2ban-client -t`.
 
 ```sh
 fail2ban-client -t
-systemctl restart fail2ban
 fail2ban-client status
 nft list ruleset
 ```
-
-Dla DNS oczekuj UDP 53 oraz TCP 53, 443, 853, osobno dla IPv4 i IPv6.
 
 ## 12. Rejestr hazardowy
 

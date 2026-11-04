@@ -71,7 +71,7 @@ def render(config):
     for version in (4, 6):
         members = ", ".join(str(n) for n in sorted(nets, key=str) if n.version == version)
         sets.append(f" set clients{version} {{ type ipv{version}_addr; flags interval; auto-merge; elements = {{ {members} }}; }}")
-    firewall = f"add table inet {table}\nflush table inet {table}\ntable inet {table} {{\n" + "\n".join(sets) + "\n" + """ chain input {
+    firewall = f"destroy table inet {table}\ntable inet {table} {{\n" + "\n".join(sets) + "\n" + """ chain input {
   type filter hook input priority -6; policy accept;
   meta l4proto { tcp, udp } th dport 8443 ip saddr @clients4 counter accept
   meta l4proto { tcp, udp } th dport 8443 ip6 saddr @clients6 counter accept
@@ -96,9 +96,9 @@ def render(config):
 
 def bind_acl(text):
     text = re.sub(r"/\*.*?\*/|//[^\n]*|\#[^\n]*", "", text, flags=re.S)
-    matches = re.findall(r'acl\s+"klienci_sieci"\s*\{([^{}]*)\}\s*;', text)
+    matches = re.findall(r'acl\s+(?:"(?:klienci_sieci|clients)"|clients)\s*\{([^{}]*)\}\s*;', text)
     if len(matches) != 1:
-        raise ValueError("Expected one literal klienci_sieci ACL in named.conf.options")
+        raise ValueError("Expected one literal klienci_sieci/clients ACL in named.conf.options")
     return {ipaddress.ip_network(x.strip(), strict=False) for x in matches[0].split(";") if x.strip()}
 
 

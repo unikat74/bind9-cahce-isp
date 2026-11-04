@@ -1,9 +1,11 @@
 [Unit]
-Description=Codzienna aktualizacja ThreatFox RPZ
+Description=Aktualizacja ThreatFox RPZ o 06:00 i 18:00
 
 [Timer]
-OnCalendar=*-*-* 03:17:00
-RandomizedDelaySec=20m
+OnCalendar=*-*-* 06:00:00 Europe/Warsaw
+OnCalendar=*-*-* 18:00:00 Europe/Warsaw
+RandomizedDelaySec=0
+AccuracySec=1s
 Persistent=true
 Unit=threatfox-rpz.service
 

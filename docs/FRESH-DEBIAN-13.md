@@ -238,6 +238,14 @@ ss -lntup | grep -E ':(53|443|853)\b'
 
 Nie kontynuuj, jeżeli klasyczny DNS na localhost nie zwraca `NOERROR` i `ra`.
 
+### Obowiązkowo: ochrona DNS Fail2Ban
+
+Po uruchomieniu bazowego BIND wykonaj sekcję 1
+[DNS-EXTENSIONS-INSTALL.md](DNS-EXTENSIONS-INSTALL.md).
+Samo zainstalowanie fail2ban chroni tylko domyślnie skonfigurowane SSH,
+nie tworzy jaili DNS. Wpisz wszystkie sieci klientów do BIND, firewalla
+oraz wyjątków DNS; w Cybermax obejmuje to także `10.0.0.0/20`.
+
 ## 9. Certyfikat, DoT i DoH
 
 Przed Certbotem sprawdź rekordy A/AAAA i TCP 80. Następnie użyj dokładnych
@@ -254,7 +262,18 @@ Przed przekazaniem danych klientowi sprawdź tabelę zgodności w
 `docs/CLIENT-COMPATIBILITY.md`. W szczególności nie deklaruj bezpośredniego DoH
 z BIND-em jako wspieranego dla RouterOS 6.49.x.
 
+### DoQ i DNSCrypt
+
+Po odbiorze DoT/DoH wykonaj sekcje 2–4
+[DNS-EXTENSIONS-INSTALL.md](DNS-EXTENSIONS-INSTALL.md): wspólne inventory,
+instalator DoQ, następnie osobny DNSCrypt. Sprawdź rzeczywiste zapytania
+UDP/TCP i IPv4/IPv6 oraz zastosowanie RPZ, nie tylko status systemd.
+
 ## 10. ThreatFox, hazard i para dns1/dns2
+
+ThreatFox można dołączyć osobno przez nowy instalator primary/secondary
+(sekcja 5 [DNS-EXTENSIONS-INSTALL.md](DNS-EXTENSIONS-INSTALL.md)).
+Auth-Key jest wyłącznie na primary; secondary otrzymuje feed przez TSIG.
 
 Najpierw uruchom instalator obu RPZ w roli primary na dns1. Potwierdź
 `rndc zonestatus` dla ThreatFox i hazardu, a dopiero potem uruchom instalator w

@@ -8,6 +8,7 @@ czytać ich wszystkich po kolei.
 | Potrzeba | Dokument |
 |---|---|
 | Instalacja dwóch resolverów na czystym Debianie 13 | [`FRESH-DEBIAN-13.md`](FRESH-DEBIAN-13.md) |
+| Uzupełnienie świeżej instalacji: Fail2Ban, DoQ, DNSCrypt i ThreatFox | [`DNS-EXTENSIONS-INSTALL.md`](DNS-EXTENSIONS-INSTALL.md) |
 | Pełna konfiguracja BIND, TLS, DoT, DoH, RPZ i Fail2Ban | [`INSTALL.md`](INSTALL.md) |
 | Instalacja DoQ: firewall, TLS, Fail2Ban, systemd i rollback | [`DOQ-INSTALL.md`](DOQ-INSTALL.md) |
 | Instalator DNSCrypt, kontrola rotacji kluczy, aktualizacja i klienci | [`DNSCRYPT-INSTALL.md`](DNSCRYPT-INSTALL.md) |

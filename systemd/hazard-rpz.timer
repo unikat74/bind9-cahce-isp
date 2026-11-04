@@ -1,10 +1,11 @@
 [Unit]
-Description=Cogodzinna aktualizacja RPZ rejestru hazardowego MF
+Description=Aktualizacja RPZ rejestru hazardowego MF o 06:00 i 18:00
 
 [Timer]
-OnBootSec=5min
-OnUnitActiveSec=1h
-RandomizedDelaySec=5min
+OnCalendar=*-*-* 06:00:00 Europe/Warsaw
+OnCalendar=*-*-* 18:00:00 Europe/Warsaw
+RandomizedDelaySec=0
+AccuracySec=1s
 Persistent=true
 
 [Install]
