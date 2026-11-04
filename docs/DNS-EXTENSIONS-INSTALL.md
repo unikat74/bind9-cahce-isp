@@ -151,8 +151,8 @@ Sprawdź zgodność seriali, log transferu z TSIG i NXDOMAIN dla aktualnej
 pozycji feedu na obu serwerach. `dnssec-failed.org` nadal ma zwracać SERVFAIL,
 a zwykła podpisana domena zachowywać AD.
 
-Na nowych hostach wykonano przygotowanie ról i TSIG; aktywacja czeka na
-osobny Auth-Key na dns1. Oba timery list na primary są ustawione na 06:00
+Na nowych hostach wykonano przygotowanie i aktywację z osobnym Auth-Key
+wyłącznie na dns1; transfer TSIG i NXDOMAIN na obu hostach potwierdzono. Oba timery list na primary są ustawione na 06:00
 i 18:00 Europe/Warsaw, bez losowego opóźnienia; pominięte uruchomienie jest
 nadrabiane po starcie serwera. Dla starszej wspólnej instalacji obu feedów
 pozostaje też `bootstrap-rpz.sh` opisany w [INSTALL.md](INSTALL.md).

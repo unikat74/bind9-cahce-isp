@@ -116,6 +116,11 @@ Nowy instalator usuwa stare bany nowo zaufanych klientów.
 
 ThreatFox przygotowany jako primary na dns1 i secondary na dns2 przez
 osobny TSIG `threatfox-rpz-xfr`. Klucz API ma być tylko na dns1;
-nie użyto klucza wzorcowego hosta. Feed i polityka pozostają niewłączone
-w oczekiwaniu na osobny Auth-Key. Instrukcja aktywacji:
+nie użyto klucza wzorcowego hosta. Feed i polityka zostały aktywowane po zapisaniu osobnego Auth-Key na dns1.
+Potwierdzono transfer TSIG i serial 2611041923 na obu hostach.
+Domena z feedu `kg.afktogel.org` zwraca NXDOMAIN przez DNS UDP/TCP, DoT
+i DoH po IPv4/IPv6 na obu hostach, a na dns2 także DoQ i DNSCrypt UDP/TCP.
+Antyhazard IDN i walidacja DNSSEC nadal działają. Pominięto jeden rekord
+feedu przekraczający limit nazwy DNS (256 bajtów); pozostała strefa przeszła
+named-checkzone. Instrukcja aktywacji:
 [DNS-EXTENSIONS-INSTALL.md](DNS-EXTENSIONS-INSTALL.md).

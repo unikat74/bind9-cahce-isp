@@ -29,8 +29,8 @@ dns1 `193.192.179.11`, dns2 `193.192.179.12`.
 Powyższa tabela opisuje porównanie przed uzupełnieniem frontendów.
 Na dns2 wdrożono potem DoQ i DNSCrypt; na dns1 nie rozszerzano frontendów
 w tym etapie. Oba nowe hosty mają dodatkową sieć DNS `10.0.0.0/20`.
-ThreatFox przygotowano do replikacji dns1→dns2, aktywacja czeka na osobny
-Auth-Key tylko na dns1. Aktualne kroki: [DNS-EXTENSIONS-INSTALL.md](DNS-EXTENSIONS-INSTALL.md).
+ThreatFox aktywowano: dns1 pobiera feed z osobnym Auth-Key, dns2 replikuje
+strefę przez TSIG. Potwierdzono zgodne seriale i NXDOMAIN na obu hostach. Aktualne kroki: [DNS-EXTENSIONS-INSTALL.md](DNS-EXTENSIONS-INSTALL.md).
 
 ## Wdrożona ochrona DNS
 

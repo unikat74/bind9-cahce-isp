@@ -3,7 +3,7 @@
 Nowe instalacje Cybermax z 4 listopada 2026: [uzupełnienie instalatora](docs/DNS-EXTENSIONS-INSTALL.md),
 [stan dns1](docs/DNS1-REBUILD-2026-11-04.md), [stan dns2](docs/DNS2-REBUILD-2026-11-04.md).
 Poniższe historyczne opisy pełnego wdrożenia i snapshoty `servers/` nie zastępują
-bieżącego raportu: na nowych hostach ThreatFox czeka na osobny Auth-Key.
+bieżącego raportu: ThreatFox jest aktywny, dns1 pobiera feed i replikuje go do dns2 przez TSIG.
 
 **Status: DNS, DoT, DoH, DoQ i DNSCrypt dostępne dla sieci klientów na dns1 i dns2.**
 Zakres podstawowy odebrano 7 września 2026; DoQ i DNSCrypt dodano 13 września.
