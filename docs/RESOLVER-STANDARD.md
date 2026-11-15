@@ -1,4 +1,4 @@
-# Obowiązujący standard resolverów FUZ i Fione
+# Obowiązujący standard resolverów FUZ, Fione i Cybermax
 
 Uzgodniony 15 listopada 2026. Ten dokument i `installer/resolver_policy.py`
 określają aktualne założenia. Raporty z datą opisują historię, a `servers/`
@@ -40,14 +40,15 @@ mógł dokończyć odczyt. Nie uruchamiamy równolegle natywnej rotacji BIND.
 
 ## Co celowo różni sieci
 
-Publiczne profile bez sekretów: `installer/profiles/fuz.toml`, `fione.toml`.
+Publiczne profile bez sekretów: `installer/profiles/fuz.toml`, `fione.toml`, `cybermax.toml`.
 Adresy listenerów, certyfikaty, bramy, interfejsy i tożsamości DNSCrypt pozostają
 hostowe. Każda sieć ma własny Auth-Key ThreatFox, tylko na dns1 w
 `/etc/threatfox.env` (root:root 0600). Klucze TSIG są różne także między sieciami.
 
 FUZ: forwardery Cloudflare/Google IPv4 i Google IPv6. Cloudflare IPv6 pominięto
 po odpowiedzi bramy network unreachable; nie dodawać go bez testu routingu i DNS.
-Fione: również forwardery Cloudflare IPv6. Listę upstreamów weryfikujemy z hosta.
+Fione: również forwardery Cloudflare IPv6. Listę upstreamów weryfikujemy z hosta. Cybermax zachowuje tylko cztery
+forwardery IPv4: sondy Google/Cloudflare IPv6 zwracały timeout na obu hostach.
 NTP Fione zachowuje m.in. 172.31.254.3/32, ale nie dostaje automatycznie prywatnych
 sieci DNS. Wyjątek 78.31.90.144/32 jest tylko dla SSH Fione; nie rozszerza NTP/DNS.
 
@@ -61,7 +62,7 @@ python3 installer/bootstrap-resolver-policy.py installer/profiles/fuz.toml --out
 python3 installer/bootstrap-resolver-policy.py installer/profiles/fuz.toml --install
 ```
 
-Dla Fione użyj profilu fione.toml. Dla innej sieci utwórz własny profil o polach
+Dla Fione użyj profilu fione.toml, dla Cybermax cybermax.toml. Dla innej sieci utwórz własny profil o polach
 clients, ntp_clients, administrators, forwarders oraz opcjonalnym
 ssh_administrators (wyjątki tylko dla SSH). Puste lub otwarte ACL są zabronione.
 Administratorzy są dodawani do ACL DNS/NTP/SSH; loopback jest dodawany automatycznie.
@@ -118,9 +119,10 @@ adresu dokumentacyjnego w nftables. Sam status active nie wystarcza.
 Testy jednostkowe obejmują politykę, profile, ACL, rozdzielenie kluczy,
 parametry SSH i wybór rodzin, zachowanie TLS/RPZ przy edycji options,
 blokadę usuwania istniejących klientów, localhost oraz harmonogramy.
-Oba wygenerowane profile sprawdzono na Debianie 13: named-checkconf -z
+Profile FUZ/Fione sprawdzono na Debianie 13: named-checkconf -z
 (w tym localhost), nft -c, fail2ban-client -t w kopii konfiguracji,
 logrotate --debug z osobnym stanem i systemd-analyze verify. Testy nie
 zmieniały aktywnych plików/usług. Powtórz walidację po zmianach profilu.
-Pełnego nowego bootstrap-resolver-policy --install nie uruchamiano na świeżej VM;
-operacje produkcyjne wykonano wcześniej etapami i mają osobne raporty.
+bootstrap-resolver-policy --install zastosowano na istniejącej parze Cybermax
+po odbiorze dns2 przed dns1; raport CYBERMAX-UPDATE-2026-11-15.md. Nie wykonano
+pełnej instalacji na świeżej VM. FUZ/Fione wdrożono wcześniej etapami.

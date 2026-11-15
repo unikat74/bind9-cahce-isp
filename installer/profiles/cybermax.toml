@@ -1,0 +1,7 @@
+clients = ["193.192.179.0/24", "117.55.198.0/24", "10.0.0.0/20", "2001:67c:660::/48"]
+# Preserve the established NTP scope: private DNS clients do not imply NTP access.
+ntp_clients = ["193.192.179.0/24", "117.55.198.0/24", "2001:67c:660::/48"]
+administrators = ["188.137.37.190/32"]
+ssh_administrators = ["193.192.179.0/24", "117.55.198.0/24", "2001:67c:660::/48"]
+# IPv6 forwarding probes timed out on both hosts on 2026-11-15.
+forwarders = ["1.1.1.1", "1.0.0.1", "8.8.8.8", "8.8.4.4"]

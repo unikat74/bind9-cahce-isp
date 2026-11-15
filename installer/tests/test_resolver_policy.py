@@ -16,7 +16,7 @@ class ResolverPolicyTests(unittest.TestCase):
         self.config = tomllib.loads((ROOT / 'installer/profiles/fione.toml').read_text())
 
     def test_same_limits_logs_and_separate_ntp_acl_for_both_sites(self):
-        for site in ['fuz', 'fione']:
+        for site in ['fuz', 'fione', 'cybermax']:
             config = tomllib.loads((ROOT / 'installer/profiles' / (site + '.toml')).read_text())
             files = m.render(config)
             opts = files['etc/bind/named.conf.resolver-policy']
@@ -73,6 +73,13 @@ zone "other" { type primary; allow-transfer { none; }; file "/etc/bind/other"; }
         self.assertIn('response-policy { zone "rpz.hazard.mf.gov.pl" policy given; } break-dnssec yes;', result)
         self.assertIn('zone "other" { type primary; allow-transfer { none; };', result)
         self.assertEqual(m.apply_options(result, self.config), result)
+
+    def test_migrates_legacy_clients_acl_without_leaving_duplicate_acls(self):
+        original = 'acl clients { 78.31.88.0/21; }; options { allow-query { clients; }; recursion yes; };'
+        result = m.apply_options(original, self.config)
+        self.assertNotIn('acl clients', result)
+        self.assertEqual(m.common.bind_acl(result), set(m.policy.networks(self.config['clients'] + self.config['administrators'] + ['127.0.0.1/32', '::1/128'])))
+        self.assertIn('acl "klienci_sieci"', result)
 
     def test_refuses_removing_existing_client(self):
         text = 'acl "klienci_sieci" { 192.0.2.0/24; }; options { recursion yes; };'

@@ -59,7 +59,7 @@ def apply_options(text, config):
     """Preserve TLS/listeners/RPZ; replace only named policy statements."""
     nets = policy.networks(config['clients'] + config['administrators'] + ['127.0.0.1/32', '::1/128'])
     acl = 'acl "klienci_sieci" { ' + ' '.join(str(n) + ';' for n in nets) + ' };'
-    pattern = r'acl\s+"?klienci_sieci"?\s*\{[^{}]*\}\s*;'
+    pattern = r'acl\s+(?:"(?:klienci_sieci|clients)"|(?:klienci_sieci|clients))\s*\{[^{}]*\}\s*;'
     matches = re.findall(pattern, text)
     if len(matches) > 1:
         raise ValueError('Ambiguous client ACL')

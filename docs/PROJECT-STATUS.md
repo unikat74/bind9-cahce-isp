@@ -1,6 +1,6 @@
 # Stan i zamknięcie projektu
 
-**Aktualne założenia FUZ/Fione (15 listopada 2026): [standard resolverów](RESOLVER-STANDARD.md).**
+**Aktualne założenia FUZ/Fione/Cybermax (15 listopada 2026): [standard resolverów](RESOLVER-STANDARD.md).**
 Starsze raporty i snapshoty opisują historię; nowe wdrożenia zaczynaj od wspólnej polityki.
 
 Aktualny stan FUZ/Fione: cache 2 GiB, rekursja 10000, TCP 1000; firewall

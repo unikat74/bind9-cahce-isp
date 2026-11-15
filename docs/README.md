@@ -1,6 +1,6 @@
 # Dokumentacja projektu
 
-**Aktualne założenia FUZ/Fione (15 listopada 2026): [standard resolverów](RESOLVER-STANDARD.md).**
+**Aktualne założenia FUZ/Fione/Cybermax (15 listopada 2026): [standard resolverów](RESOLVER-STANDARD.md).**
 Starsze raporty i snapshoty opisują historię; nowe wdrożenia zaczynaj od wspólnej polityki.
 
 
@@ -12,6 +12,7 @@ czytać ich wszystkich po kolei.
 | Potrzeba | Dokument |
 |---|---|
 | Obowiązujące założenia FUZ/Fione i profile instalatora | [RESOLVER-STANDARD.md](RESOLVER-STANDARD.md) |
+| Aktualizacja Cybermax i dowody odbioru | [CYBERMAX-UPDATE-2026-11-15.md](CYBERMAX-UPDATE-2026-11-15.md) |
 | Podsumowanie wszystkich zmian i kopie rollback | [OPERATIONS-2026-11-15.md](OPERATIONS-2026-11-15.md) |
 | Instalacja dwóch resolverów na czystym Debianie 13 | [`FRESH-DEBIAN-13.md`](FRESH-DEBIAN-13.md) |
 | Uzupełnienie świeżej instalacji: Fail2Ban, DoQ, DNSCrypt i ThreatFox | [`DNS-EXTENSIONS-INSTALL.md`](DNS-EXTENSIONS-INSTALL.md) |

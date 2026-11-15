@@ -1,6 +1,6 @@
 # BIND 9 cache resolver dla ISP
 
-**Aktualne założenia FUZ/Fione (15 listopada 2026): [standard resolverów](docs/RESOLVER-STANDARD.md).**
+**Aktualne założenia FUZ/Fione/Cybermax (15 listopada 2026): [standard resolverów](docs/RESOLVER-STANDARD.md).**
 Starsze raporty i snapshoty opisują historię; nowe wdrożenia zaczynaj od wspólnej polityki.
 
 
