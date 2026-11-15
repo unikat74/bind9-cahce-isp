@@ -3,6 +3,7 @@
 import argparse
 import configparser
 import io
+import importlib.util
 import json
 import ipaddress
 import os
@@ -12,21 +13,10 @@ import subprocess
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
-LOGGING = '''logging {
- channel security_file {
-  file "/var/log/named/security.log" versions 5 size 20m;
-  severity info;
-  print-time yes;
- };
- channel rpz_file {
-  file "/var/log/named/rpz.log" versions 5 size 20m;
-  severity info;
-  print-time yes;
- };
- category security { security_file; };
- category rpz { rpz_file; };
-};
-'''
+_spec = importlib.util.spec_from_file_location('resolver_policy', ROOT / 'installer/resolver_policy.py')
+policy = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(policy)
+LOGGING = policy.LOGGING
 
 
 def render(networks):
@@ -46,6 +36,13 @@ def render(networks):
     jail = output.getvalue()
     files = {'etc/bind/named.conf.logging': LOGGING,
              'etc/fail2ban/jail.d/named-cache-denied.local': jail}
+    for source, target in [
+        ('logrotate/isp-dns.conf', 'etc/logrotate-isp-dns.conf'),
+        ('systemd/isp-dns-logrotate.service', 'etc/systemd/system/isp-dns-logrotate.service'),
+        ('systemd/isp-dns-logrotate.timer', 'etc/systemd/system/isp-dns-logrotate.timer'),
+    ]:
+        files[target] = (ROOT / source).read_text()
+    files['etc/logrotate.d/named-security'] = '# Rotation owned by isp-dns-logrotate.timer\n'
     for relative in ['filter.d/named-cache-denied.conf', 'filter.d/named-cache-denied-v6.conf',
                      'action.d/nftables-multiport-ip6.conf']:
         files['etc/fail2ban/' + relative] = (ROOT / 'fail2ban' / relative).read_text()
@@ -71,6 +68,10 @@ def install(files, networks):
     # Refuse a second logging block; existing installs need explicit merging.
     if 'logging {' in before:
         raise ValueError('Existing inline logging block: merge it before installing')
+    for entry in Path('/etc/logrotate.d').iterdir():
+        if entry.is_file() and entry.name != 'named-security' and '/var/log/named/' in entry.read_text(errors='replace'):
+            raise ValueError('Competing logrotate entry: ' + str(entry))
+    timer_enabled = subprocess.run(['systemctl', 'is-enabled', '--quiet', 'isp-dns-logrotate.timer']).returncode == 0
     backup = Path(tempfile.mkdtemp(prefix='dns-protection-', dir='/root'))
     backup.chmod(0o700)
     previous = {}
@@ -95,14 +96,20 @@ def install(files, networks):
             path.chmod(0o644)
         run('named-checkconf')
         run('fail2ban-client', '-t')
+        run('logrotate', '--debug', '--state', '/var/lib/logrotate/isp-dns.status', '/etc/logrotate-isp-dns.conf')
         run('rndc', 'reconfig')
         run('fail2ban-client', 'reload')
+        run('systemctl', 'daemon-reload')
+        run('systemctl', 'enable', '--now', 'isp-dns-logrotate.timer')
     except Exception:
+        if not timer_enabled:
+            subprocess.run(['systemctl', 'disable', '--now', 'isp-dns-logrotate.timer'], capture_output=True)
         for path, content in previous.items():
             if content is None:
                 path.unlink(missing_ok=True)
             else:
                 path.write_bytes(content)
+        subprocess.run(['systemctl', 'daemon-reload'])
         subprocess.run(['rndc', 'reconfig'])
         subprocess.run(['fail2ban-client', 'reload'])
         raise

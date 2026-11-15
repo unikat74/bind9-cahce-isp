@@ -1,3 +1,6 @@
+**Historyczny snapshot, nie aktualny instalator.** Obowiązujące ustawienia
+zawiera [standard resolverów](../docs/RESOLVER-STANDARD.md) i installer/resolver_policy.py.
+
 # Snapshoty serwerów
 
 Katalogi `dns1/` i `dns2/` odzwierciedlają ścieżki na produkcyjnych

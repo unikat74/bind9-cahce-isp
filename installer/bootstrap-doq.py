@@ -4,6 +4,7 @@ import argparse
 import importlib.util
 import json
 import os
+import re
 from pathlib import Path
 import subprocess
 import tempfile
@@ -20,7 +21,7 @@ def render(config):
     # Generate only the supported DoQ frontend; DNSCrypt is a separate service.
     frontend = 'setACL(' + json.dumps([str(n) for n in sorted(nets, key=str)]).replace('[', '{').replace(']', '}') + ')\n'
     frontend += '''setLocal("127.0.0.1:5301")
-newServer({address="127.0.0.1:5300", name="bind-local", useProxyProtocol=true, checkName="example.org.", checkType="A"})
+newServer({address="127.0.0.1:5300", name="bind-local", useProxyProtocol=true, checkName="localhost.", checkType="A"})
 local cert = "/etc/dnsdist/tls/current/fullchain.pem"
 local key = "/etc/dnsdist/tls/current/privkey.pem"
 '''
@@ -52,6 +53,9 @@ def install(config, files):
         raise ValueError('dnsdist must support dns-over-quic')
     if Path('/etc/dnsdist/tls/current').exists() or 'table inet isp_doq\n' in common.run('nft', 'list', 'tables'):
         raise ValueError('Existing DoQ installation; preserve it and use documented update procedure')
+    answer = common.run('dig', '@127.0.0.1', 'localhost', 'A', '+norecurse')
+    if 'status: NOERROR' not in answer or not re.search(r'flags:.*\baa\b', answer):
+        raise ValueError('Authoritative localhost zone required; install resolver policy first')
     options = Path('/etc/bind/named.conf.options')
     old_options = options.read_text()
     if 'proxy plain' in old_options:

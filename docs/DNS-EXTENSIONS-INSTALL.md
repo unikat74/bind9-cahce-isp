@@ -1,5 +1,9 @@
 # Uzupełnienie świeżej instalacji: ochrona DNS, DoQ, DNSCrypt, ThreatFox
 
+**Aktualne założenia FUZ/Fione (15 listopada 2026): [standard resolverów](RESOLVER-STANDARD.md).**
+Starsze raporty i snapshoty opisują historię; nowe wdrożenia zaczynaj od wspólnej polityki.
+
+
 Wykonuj na jednym serwerze naraz. Punktem startowym jest działający BIND
 z DNSSEC, lokalnym resolverem, ACL klientów oraz certyfikatem Let's Encrypt
 na DNS/DoT/DoH. Sekrety pozostają na hostach. Snapshoty `servers/` są
@@ -7,16 +11,17 @@ historyczne i nie służą do instalacji wprost.
 
 ## 1. Ochrona DNS IPv4 i IPv6
 
-Wymagane pakiety: `bind9-utils fail2ban nftables python3`. Po uruchomieniu
-bazowego BIND uruchom z katalogu repozytorium (wpisz wszystkie własne sieci):
+Wymagane pakiety: `bind9-utils fail2ban nftables python3 chrony logrotate`.
+Pełny aktualny standard (limity, firewall DNS/NTP, SSH i logi) instaluje:
 
 ```sh
-python3 installer/bootstrap-dns-protection.py \
-  --client-network 193.192.179.0/24 \
-  --client-network 117.55.198.0/24 \
-  --client-network 10.0.0.0/20 \
-  --client-network 2001:67c:660::/48 --install
+python3 installer/bootstrap-resolver-policy.py installer/profiles/fuz.toml --output /tmp/resolver-policy
+python3 installer/bootstrap-resolver-policy.py installer/profiles/fuz.toml --install
 ```
+
+Dla Fione wybierz profil fione.toml. Profile innych sieci przygotuj według
+RESOLVER-STANDARD.md. `bootstrap-dns-protection.py` pozostaje częściowym,
+starszym etapem (jaile DNS i logi), nie kompletnym instalatorem polityki.
 
 `--output /tmp/dns-protection-rendered` zamiast `--install` generuje pliki
 bez zmiany hosta. Instalator zapisuje kopię w `/root/dns-protection-*`,
@@ -29,7 +34,8 @@ rekurencji w godzinę, ban dwa dni. Zaufane sieci klientów nie są banowane.
 Instalator usuwa ich istniejące bany DNS po zmianie `ignoreip`; nie usuwa
 banów obcych adresów ani SSH. Sam reload nie usuwa starych banów.
 
-Logi rotuje BIND, po 20 MiB i pięć archiwów:
+Logi rotuje logrotate: daily, maxsize 20M, 7 archiwów, compress/delaycompress;
+sprawdzanie rozmiaru co godzinę przez isp-dns-logrotate.timer:
 
 - `/var/log/named/security.log`: odmowy, czytane przez Fail2Ban;
 - `/var/log/named/rpz.log`: zdarzenia RPZ, nie są powodem bana.
@@ -77,7 +83,7 @@ python3 installer/bootstrap-doq.py installer/dnscrypt.toml --install
 ```
 
 Instalator przeprowadza preflight BIND/ACL/adresów/Fail2Ban, dodaje wyłącznie
-lokalny listener PROXYv2 5300, własną tabelę nftables `isp_doq`, dnsdist
+lokalny listener PROXYv2 5300, test localhost A (wymagana lokalna strefa), własną tabelę nftables `isp_doq`, dnsdist
 z ACL i hook odnowienia certyfikatu. Sprawdza konfigurację przed startem.
 Kopie: `/root/doq-install-*`. Nie nadpisuje istniejącego DoQ; aktualizacje
 wykonuj według [DOQ-INSTALL.md](DOQ-INSTALL.md), zachowując klucze i konfigurację.
@@ -152,8 +158,8 @@ pozycji feedu na obu serwerach. `dnssec-failed.org` nadal ma zwracać SERVFAIL,
 a zwykła podpisana domena zachowywać AD.
 
 Na nowych hostach wykonano przygotowanie i aktywację z osobnym Auth-Key
-wyłącznie na dns1; transfer TSIG i NXDOMAIN na obu hostach potwierdzono. ThreatFox na primary jest pobierany raz dziennie o 05:00 Europe/Warsaw;
-antyhazard pozostaje o 06:00 i 18:00. Bez losowego opóźnienia; pominięte uruchomienie jest
+wyłącznie na dns1; transfer TSIG i NXDOMAIN na obu hostach potwierdzono. ThreatFox na primary jest pobierany raz dziennie o 03:17 Europe/Warsaw
+z losowym opóźnieniem do 20 minut; antyhazard o 06:00 i 18:00 bez opóźnienia. Pominięte uruchomienie jest
 nadrabiane po starcie serwera. Dla starszej wspólnej instalacji obu feedów
 pozostaje też `bootstrap-rpz.sh` opisany w [INSTALL.md](INSTALL.md).
 

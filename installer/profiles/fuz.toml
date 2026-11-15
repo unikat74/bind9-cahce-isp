@@ -1,0 +1,6 @@
+# Public site ACL, not secrets. Recheck ownership and upstream reachability before installation.
+clients = ["109.196.32.0/21", "109.196.41.0/24", "109.196.43.0/24", "109.196.44.0/24", "109.196.46.0/23", "193.31.76.0/22", "172.17.0.0/16", "2a0d:6040::/29"]
+ntp_clients = ["109.196.32.0/21", "109.196.41.0/24", "109.196.43.0/24", "109.196.44.0/24", "109.196.46.0/23", "193.31.76.0/22", "172.17.0.0/16", "2a0d:6040::/29"]
+administrators = ["188.137.37.190/32"]
+# Cloudflare IPv6 omitted: gateway reports unreachable on FUZ; Google IPv6 tested.
+forwarders = ["1.1.1.1", "1.0.0.1", "8.8.8.8", "8.8.4.4", "2001:4860:4860::8888", "2001:4860:4860::8844"]

@@ -1,19 +1,20 @@
 # Wdrożenie RPZ ThreatFox i rejestru hazardowego
 
 `dns1` utrzymuje obie strefy primary. `dns2` odbiera je przez transfer
-uwierzytelniony TSIG. ThreatFox działa w trybie audytu, a rejestr hazardowy w
-trybie aktywnej polityki.
+uwierzytelniony TSIG. Obie polityki są aktywne: ThreatFox NXDOMAIN, antyhazard policy given.
+Obowiązują limity i zabezpieczenia z [RESOLVER-STANDARD.md](RESOLVER-STANDARD.md).
 
 ## dns1 — primary
 
 1. Zapisz Auth-Key ThreatFox w `/etc/threatfox.env` (`root:root`, `0600`).
-2. Wygeneruj `/etc/bind/keys/threatfox-rpz-xfr.key` (`root:bind`, `0640`).
+2. Wygeneruj osobno `threatfox-rpz-xfr.key` i `hazard-rpz-xfr.key`
+   w `/etc/bind/keys/` (`root:bind`, `0640`), jak w INSTALL.md.
 3. Skopiuj `installer/inventory.env.example` do ignorowanego przez Git pliku
    `installer/inventory.env` i ustaw rzeczywiste adresy obu serwerów.
 4. Uruchom `./installer/bootstrap-rpz.sh primary`.
 5. Dołącz `/etc/bind/named.conf.rpz` w `named.conf.local`, a
    `/etc/bind/named.conf.rpz-options` wewnątrz `options {}`.
-6. Dodaj `category rpz { security_file; };` do konfiguracji logowania.
+6. Użyj osobnych security_file/rpz_file z instalatora wspólnej polityki.
 7. Wykonaj `named-checkconf && systemctl reload named`.
 8. Po testach włącz aktualizacje:
 
@@ -23,7 +24,7 @@ systemctl enable --now threatfox-rpz.timer hazard-rpz.timer
 
 ## dns2 — secondary
 
-1. Skopiuj dokładnie ten sam plik TSIG z dns1 i ustaw `root:bind`, `0640`.
+1. Skopiuj oba pliki TSIG z dns1, każdy dla swojej strefy; ustaw `root:bind`, `0640`.
 2. Przygotuj `installer/inventory.env`.
 3. Uruchom `./installer/bootstrap-rpz.sh secondary`.
 4. Dodaj oba include'y i kategorię logowania tak samo jak na dns1.
@@ -36,7 +37,7 @@ systemctl enable --now threatfox-rpz.timer hazard-rpz.timer
 rndc zonestatus rpz.threatfox.abuse.ch
 rndc zonestatus rpz.hazard.mf.gov.pl
 dig @127.0.0.1 qaqfaxian.com A
-tail -f /var/log/named/security.log | grep --line-buffered 'rpz'
+tail -f /var/log/named/rpz.log
 ```
 
 Dla ThreatFox oczekuj NXDOMAIN i wpisu `rpz QNAME NXDOMAIN rewrite`. Dla domeny

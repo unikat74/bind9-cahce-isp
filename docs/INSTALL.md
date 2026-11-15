@@ -1,5 +1,9 @@
 # Instalacja BIND 9 dla ISP — pełna instrukcja
 
+**Aktualne założenia FUZ/Fione (15 listopada 2026): [standard resolverów](RESOLVER-STANDARD.md).**
+Starsze raporty i snapshoty opisują historię; nowe wdrożenia zaczynaj od wspólnej polityki.
+
+
 Instrukcja opisuje dwa resolvery BIND 9 na Debianie 13:
 
 - `dns1.example.net` — `198.51.100.10`, IPv6 `2001:db8:100:1::2`;
@@ -91,9 +95,11 @@ acl "klienci_sieci" {
 Wewnątrz `options {}`:
 
 ```conf
-tcp-clients 500;
+max-cache-size 2G;
+recursive-clients 10000;
+tcp-clients 1000;
 directory "/var/cache/bind";
-allow-query { any; };
+allow-query { klienci_sieci; };
 recursion yes;
 allow-recursion { klienci_sieci; };
 allow-query-cache { klienci_sieci; };
@@ -280,9 +286,10 @@ W `/etc/bind/named.conf` dodaj jeden blok:
 Nową ochronę DNS instaluj według
 [DNS-EXTENSIONS-INSTALL.md](DNS-EXTENSIONS-INSTALL.md), sekcja 1.
 Instalator tworzy `/etc/bind/named.conf.logging`: osobne `security.log`
-dla Fail2Ban i `rpz.log` dla polityk, z rotacją BIND 20 MiB / 5 archiwów.
+dla Fail2Ban i `rpz.log` dla polityk. Rotuje je logrotate: codziennie,
+maxsize 20M, 7 archiwów z kompresją, sprawdzanie co godzinę.
 Nie dodawaj drugiego bloku logging ani równoległego logrotate dla tych plików.
-Starsze wdrożenia z unlimited/logrotate wymagają scalenia konfiguracji.
+Starsze wdrożenia wymagają migracji do jednej rotacji opisanej w RESOLVER-STANDARD.md.
 
 ```sh
 named-checkconf
@@ -303,13 +310,17 @@ nano /etc/threatfox.env
 THREATFOX_AUTH_KEY='WARTOŚĆ_TYLKO_NA_SERWERZE'
 ```
 
-Nie commituj tego pliku. Wygeneruj klucz TSIG do transferu obu stref:
+Nie commituj tego pliku. Wygeneruj dwa osobne klucze TSIG, każdy tylko dla swojej strefy:
 
 ```sh
 install -d -o root -g bind -m 750 /etc/bind/keys
-tsig-keygen -a hmac-sha256 threatfox-rpz-xfr > /etc/bind/keys/threatfox-rpz-xfr.key
-chown root:bind /etc/bind/keys/threatfox-rpz-xfr.key
-chmod 640 /etc/bind/keys/threatfox-rpz-xfr.key
+umask 077
+for key in threatfox-rpz-xfr hazard-rpz-xfr; do
+    test ! -e "/etc/bind/keys/$key.key" || exit 1
+    tsig-keygen -a hmac-sha256 "$key" > "/etc/bind/keys/$key.key"
+    chown root:bind "/etc/bind/keys/$key.key"
+    chmod 640 "/etc/bind/keys/$key.key"
+done
 ```
 
 Skopiuj projekt na serwer, przygotuj jego zmienne i uruchom wspólny instalator:
@@ -359,9 +370,10 @@ systemctl list-timers threatfox-rpz.timer hazard-rpz.timer
 
 ## 9. RPZ ThreatFox i hazard na dns2
 
-Skopiuj ten sam TSIG bezpiecznym kanałem do
-`/etc/bind/keys/threatfox-rpz-xfr.key` na dns2 i ustaw `root:bind`, `0640`.
-Nie twórz osobnego klucza — musi to być identyczny sekret na obu końcach.
+Skopiuj oba klucze bezpiecznym kanałem do `/etc/bind/keys/` na dns2:
+`threatfox-rpz-xfr.key` i `hazard-rpz-xfr.key`, root:bind 0640.
+Każda strefa ma inny klucz, ale odpowiadający jej sekret musi być identyczny
+na primary i secondary. Nie regeneruj kluczy na secondary.
 Następnie:
 
 ```sh

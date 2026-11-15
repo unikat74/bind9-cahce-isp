@@ -1,16 +1,19 @@
 // dns2: secondary ThreatFox RPZ
 include "/etc/bind/keys/threatfox-rpz-xfr.key";
+include "/etc/bind/keys/hazard-rpz-xfr.key";
 
 zone "rpz.threatfox.abuse.ch" {
     type secondary;
+    allow-transfer { none; };
     file "/var/cache/bind/rpz/threatfox.rpz";
-    masters { DNS1_IPV4 key "threatfox-rpz-xfr"; };
-    allow-notify { DNS1_IPV4; };
+    primaries { DNS1_IPV4 key "threatfox-rpz-xfr"; };
+    allow-notify { key "threatfox-rpz-xfr"; };
 };
 
 zone "rpz.hazard.mf.gov.pl" {
     type secondary;
+    allow-transfer { none; };
     file "/var/cache/bind/rpz/hazard.rpz";
-    masters { DNS1_IPV4 key "threatfox-rpz-xfr"; };
-    allow-notify { DNS1_IPV4; };
+    primaries { DNS1_IPV4 key "hazard-rpz-xfr"; };
+    allow-notify { key "hazard-rpz-xfr"; };
 };

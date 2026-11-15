@@ -1,5 +1,10 @@
 # Instalacja DoQ i ochrona UDP 853
 
+Przed instalacją DoQ zastosuj [wspólną politykę resolvera](RESOLVER-STANDARD.md).
+Test backendu to localhost A, z lokalną autorytatywną odpowiedzią (NOERROR, AA).
+Nie zastępuj go domeną zewnętrzną.
+
+
 Osobny, wdrożony DNSCrypt instaluj według [DNSCRYPT-INSTALL.md](DNSCRYPT-INSTALL.md).
 Wzmianki o wyłączonym DNSCrypt poniżej dotyczą listenera dnsdist.
 

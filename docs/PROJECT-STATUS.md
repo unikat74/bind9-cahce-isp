@@ -1,5 +1,17 @@
 # Stan i zamknięcie projektu
 
+**Aktualne założenia FUZ/Fione (15 listopada 2026): [standard resolverów](RESOLVER-STANDARD.md).**
+Starsze raporty i snapshoty opisują historię; nowe wdrożenia zaczynaj od wspólnej polityki.
+
+Aktualny stan FUZ/Fione: cache 2 GiB, rekursja 10000, TCP 1000; firewall
+DNS/NTP, allow-query do ACL klientów, dwa TSIG i uwierzytelnione NOTIFY,
+osobne logi rotowane daily/maxsize 20M z 7 archiwami i kontrolą co godzinę,
+SSH IPv4 1h / IPv6 1d z narastaniem do 7d, DoQ health localhost.
+Antyhazard 06:00/18:00, ThreatFox 03:17 + 0–20 min (Europe/Warsaw).
+Niższe limity i inna rotacja w poniższych wpisach są zapisami historycznymi.
+
+
+
 ## Status
 
 **ZAKOŃCZONY — produkcja odebrana 7 września 2026 roku.**

@@ -27,10 +27,12 @@ command -v named-checkzone >/dev/null 2>&1 || {
 install -m 0755 "$ROOT/scripts/check-bind-capacity" /usr/local/sbin/check-bind-capacity
 
 install -d -o root -g bind -m 0750 /etc/bind/keys
-[ -s /etc/bind/keys/threatfox-rpz-xfr.key ] || {
-  echo "Brak /etc/bind/keys/threatfox-rpz-xfr.key." >&2
-  exit 1
-}
+for key in threatfox-rpz-xfr hazard-rpz-xfr; do
+  [ -s "/etc/bind/keys/$key.key" ] || {
+    echo "Brak /etc/bind/keys/$key.key. Wygeneruj osobne klucze na primary i przenieś bezpiecznie na secondary." >&2
+    exit 1
+  }
+done
 
 for file in /etc/bind/named.conf.rpz /etc/bind/named.conf.rpz-options; do
   if [ -e "$file" ] && [ ! -e "$file.before-rpz-installer" ]; then

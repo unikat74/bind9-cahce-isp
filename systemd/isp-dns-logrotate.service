@@ -1,0 +1,6 @@
+[Unit]
+Description=Rotate BIND security and RPZ logs
+After=named.service
+[Service]
+Type=oneshot
+ExecStart=/usr/sbin/logrotate --state /var/lib/logrotate/isp-dns.status /etc/logrotate-isp-dns.conf

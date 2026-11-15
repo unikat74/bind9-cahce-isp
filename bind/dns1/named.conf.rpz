@@ -1,5 +1,6 @@
 // dns1: primary ThreatFox RPZ
 include "/etc/bind/keys/threatfox-rpz-xfr.key";
+include "/etc/bind/keys/hazard-rpz-xfr.key";
 
 zone "rpz.threatfox.abuse.ch" {
     type primary;
@@ -14,7 +15,7 @@ zone "rpz.hazard.mf.gov.pl" {
     type primary;
     file "/etc/bind/rpz/hazard.rpz";
     check-names ignore;
-    allow-transfer { key "threatfox-rpz-xfr"; };
+    allow-transfer { key "hazard-rpz-xfr"; };
     notify yes;
-    also-notify { DNS2_IPV4 key "threatfox-rpz-xfr"; };
+    also-notify { DNS2_IPV4 key "hazard-rpz-xfr"; };
 };

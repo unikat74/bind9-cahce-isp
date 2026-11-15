@@ -6,6 +6,9 @@ się do niego. Sam komunikat `SERVFAIL` albo `quota reached` nie dowodzi, że
 globalny limit klientów jest zbyt niski — przyczyną może być niedostępny
 forwarder, błędna domena, utrata pakietów albo adaptacyjna ochrona upstreamu.
 
+Aktualny profil FUZ/Fione: **cache 2 GiB, recursive-clients 10000, tcp-clients 1000**.
+Wartości poniżej to domyślne BIND, a nie ustawienia wdrożonego profilu.
+
 ## Najważniejsze limity i wartości domyślne
 
 | Parametr | Domyślnie w BIND 9.20 | Co ogranicza |
@@ -177,13 +180,13 @@ wszystkie gniazda zostały utworzone z nową kolejką, i potwierdź `Send-Q` prz
 Parametry dodaj wewnątrz `options {}` w `/etc/bind/named.conf.options`:
 
 ```conf
-// Przykład — wartości należy dobrać z pomiarów.
-tcp-clients 750;
-recursive-clients 1500;
+// Wspólny profil FUZ/Fione; pozostałe opcje poniżej tylko po diagnozie.
+tcp-clients 1000;
+recursive-clients 10000;
 http-listener-clients 500;
 http-streams-per-connection 100;
 tcp-listen-queue 128;
-max-cache-size 1g;
+max-cache-size 2G;
 ```
 
 Zwykle pozostaw `clients-per-query 10` i `max-clients-per-query 100`, ponieważ
@@ -249,7 +252,7 @@ Jeśli rosną `TcpExtListenOverflows` lub `TcpExtListenDrops`, sprawdź dodatkow
 
 ### Aktualizacja produkcji — 9 października 2026
 
-Na obu resolverach ustawiono `recursive-clients 1500` (próg miękki 1400)
+Historycznie (przed standardem z 15 listopada) ustawiono `recursive-clients 1500` (próg miękki 1400)
 i `tcp-clients 750`. Na dns1 w poprzedniej dobie wystąpiło 49 przekroczeń
 miękkiego limitu rekursji 900; szczyt rekursji wyniósł 965, a TCP osiągnęło
 limit 500. dns2 otrzymał taki sam zapas na przejęcie ruchu.

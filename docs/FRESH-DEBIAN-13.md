@@ -1,5 +1,9 @@
 # Czysty Debian 13 dostępny tylko przez SSH
 
+**Aktualne założenia FUZ/Fione (15 listopada 2026): [standard resolverów](RESOLVER-STANDARD.md).**
+Starsze raporty i snapshoty opisują historię; nowe wdrożenia zaczynaj od wspólnej polityki.
+
+
 Ten runbook zaczyna się od serwera, na którym działa wyłącznie Debian 13 i
 SSH. Nie zakłada działającego BIND, firewalla ani certyfikatów. Wykonuj jeden
 etap naraz. Po każdym punkcie kontrolnym zostaw otwartą bieżącą sesję SSH i

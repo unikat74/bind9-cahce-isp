@@ -1,5 +1,9 @@
 # BIND 9 cache resolver dla ISP
 
+**Aktualne założenia FUZ/Fione (15 listopada 2026): [standard resolverów](docs/RESOLVER-STANDARD.md).**
+Starsze raporty i snapshoty opisują historię; nowe wdrożenia zaczynaj od wspólnej polityki.
+
+
 Nowe instalacje Cybermax z 4 listopada 2026: [uzupełnienie instalatora](docs/DNS-EXTENSIONS-INSTALL.md),
 [stan dns1](docs/DNS1-REBUILD-2026-11-04.md), [stan dns2](docs/DNS2-REBUILD-2026-11-04.md).
 Poniższe historyczne opisy pełnego wdrożenia i snapshoty `servers/` nie zastępują
@@ -27,7 +31,7 @@ jednostki systemd, porty Fail2Ban, odnowienia TLS, testy i wycofanie.
 
 Konfiguracja referencyjna dla pary BIND 9 na Debianie: rekurencyjny resolver/cache,
 DNS-over-TLS, DNS-over-HTTPS, DNS-over-QUIC, DNSCrypt, ograniczenie otwartego resolvera, Fail2Ban oraz
-ThreatFox RPZ w trybie audytu i rejestr hazardowy MF w aktywnej strefie RPZ.
+ThreatFox RPZ z aktywnym NXDOMAIN i rejestr hazardowy MF w aktywnej strefie RPZ.
 
 Obsługa rejestru hazardowego jest nową implementacją funkcji używanego wcześniej
 skryptu `hazardBind v0.7 [2022-02-18]`, którego nagłówek wskazuje
@@ -76,7 +80,7 @@ Klienci mogą korzystać z każdego resolvera niezależnie. Połączenie dns1 �
 na schemacie oznacza synchronizację RPZ, nie przekazywanie zapytań klientów.
 Oba BIND-y korzystają z dotychczasowych forwarderów.
 
-ThreatFox działa w trybie audytu, a RPZ hazardowa aktywnie zmienia odpowiedzi.
+ThreatFox blokuje przez NXDOMAIN, a RPZ hazardowa zachowuje akcje feedu.
 DoQ zachowuje adres klienta w BIND dzięki PROXYv2. W przypadku DNSCrypt
 BIND widzi `127.0.0.1`; kontrolę źródeł zapewnia firewall przed frontendem.
 Fail2Ban obejmuje na obu hostach UDP `53,853,8443` i TCP `53,443,853,8443`.

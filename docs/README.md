@@ -1,5 +1,9 @@
 # Dokumentacja projektu
 
+**Aktualne założenia FUZ/Fione (15 listopada 2026): [standard resolverów](RESOLVER-STANDARD.md).**
+Starsze raporty i snapshoty opisują historię; nowe wdrożenia zaczynaj od wspólnej polityki.
+
+
 Dokumenty są ułożone według zadania, które ma wykonać administrator. Nie trzeba
 czytać ich wszystkich po kolei.
 
@@ -7,6 +11,8 @@ czytać ich wszystkich po kolei.
 
 | Potrzeba | Dokument |
 |---|---|
+| Obowiązujące założenia FUZ/Fione i profile instalatora | [RESOLVER-STANDARD.md](RESOLVER-STANDARD.md) |
+| Podsumowanie wszystkich zmian i kopie rollback | [OPERATIONS-2026-11-15.md](OPERATIONS-2026-11-15.md) |
 | Instalacja dwóch resolverów na czystym Debianie 13 | [`FRESH-DEBIAN-13.md`](FRESH-DEBIAN-13.md) |
 | Uzupełnienie świeżej instalacji: Fail2Ban, DoQ, DNSCrypt i ThreatFox | [`DNS-EXTENSIONS-INSTALL.md`](DNS-EXTENSIONS-INSTALL.md) |
 | Pełna konfiguracja BIND, TLS, DoT, DoH, RPZ i Fail2Ban | [`INSTALL.md`](INSTALL.md) |

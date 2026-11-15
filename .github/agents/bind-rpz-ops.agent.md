@@ -19,6 +19,7 @@ Obsługuj i naprawiaj stos DNS opisany w tym projekcie, z naciskiem na:
 ## Źródło prawdy
 
 Traktuj jako podstawowe źródło wiedzy:
+- docs/RESOLVER-STANDARD.md oraz installer/resolver_policy.py — obowiązująca wspólna polityka FUZ/Fione
 - docs/README.md — nawigacja po dokumentacji
 - docs/INSTALL.md — pełna dokumentacja wdrożenia
 - docs/PROJECT-STATUS.md — zaakceptowany stan produkcji i kryteria zamknięcia
