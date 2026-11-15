@@ -49,7 +49,7 @@ class ExtensionTests(unittest.TestCase):
     def test_acl_parser_accepts_new_clients_and_rejects_ambiguity(self):
         module = load('bootstrap-dnscrypt')
         expected = {ipaddress.ip_network('192.0.2.0/24')}
-        for name in ['clients', '"clients"', '"klienci_sieci"']:
+        for name in ['clients', '"clients"', 'klienci_sieci', '"klienci_sieci"']:
             self.assertEqual(module.bind_acl('acl ' + name + ' { 192.0.2.0/24; };'), expected)
         with self.assertRaises(ValueError):
             module.bind_acl('acl clients {192.0.2.0/24;}; acl "klienci_sieci" {192.0.2.0/24;};')

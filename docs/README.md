@@ -46,3 +46,14 @@ czytać ich wszystkich po kolei.
 Jeżeli krótki dokument wdrożeniowy różni się od pełnej instrukcji, źródłem
 prawdy jest `INSTALL.md`, a stan faktycznie przyjętej produkcji opisuje
 `PROJECT-STATUS.md`.
+
+## Wdrożenie FUZ — 15 listopada 2026
+
+- [dns1](FUZ-DNS1-2026-11-15.md) i [dns2](FUZ-DNS2-2026-11-15.md): baza, ACL i TLS;
+- [rozszerzenie](FUZ-EXTENSIONS-2026-11-15.md): cache 2 GiB, DoQ, DNSCrypt,
+  forwardery IPv6, testy i rollback;
+- [antyhazard](FUZ-HAZARD-2026-11-15.md), [ThreatFox](FUZ-THREATFOX-2026-11-15.md)
+  i [NTP](FUZ-NTP-2026-11-15.md).
+
+Adresy, ACL oraz dostępność upstreamów są specyficzne dla FUZ. Raporty
+nie są uniwersalnym inventory do skopiowania na inne sieci.

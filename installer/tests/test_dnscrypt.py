@@ -1,4 +1,6 @@
 import copy
+import os
+import tempfile
 import importlib.util
 from pathlib import Path
 import tomllib
@@ -62,6 +64,22 @@ class DNSCryptInstallerTest(unittest.TestCase):
                 module.bind_acl(text)
         nets = module.bind_acl('// comment\nacl "klienci_sieci" { 127.0.0.1; /* x */ ::1; };')
         self.assertEqual(len(nets), 2)
+
+    def test_install_directories_are_traversable_with_private_umask(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            private_parent = Path(temporary)
+            private_parent.chmod(0o700)
+            previous = os.umask(0o077)
+            try:
+                target = private_parent / "opt" / "isp-dnscrypt"
+                module.install_directory(target)
+                self.assertEqual(target.stat().st_mode & 0o777, 0o755)
+                self.assertEqual(target.parent.stat().st_mode & 0o777, 0o755)
+                self.assertEqual(private_parent.stat().st_mode & 0o777, 0o700)
+                module.install_directory(private_parent)
+                self.assertEqual(private_parent.stat().st_mode & 0o777, 0o700)
+            finally:
+                os.umask(previous)
 
     def test_existing_install_refused_before_download_or_commands(self):
         with patch.object(module.Path, "exists", return_value=True), \

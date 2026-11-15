@@ -57,7 +57,11 @@ na serwerze i nigdy nie trafiają do Git.
 Zainstaluj pakiet dnsdist i dodaj backend BIND według sekcji 1–2
 [DOQ-DNSCRYPT.md](DOQ-DNSCRYPT.md). Wdrożenie sprawdzono na Debianie 13,
 BIND 9.20.26 i dnsdist 2.1.2. Sprawdź obecność `dns-over-quic` w
-`dnsdist --version`. Przed pierwszą instalacją pakietu pozostaw dnsdist
+`dnsdist --version`. Pakiet Debiana 1.9.16 nie zapewnia tego wariantu DoQ.
+Na FUZ i Fione działa 2.1.3 z [oficjalnego repozytorium PowerDNS 2.1](https://repo.powerdns.com/).
+Przy dodawaniu repozytorium plik klucza APT musi być czytelny dla `_apt`
+(0644), także gdy używasz umask 077. Nie wyłączaj weryfikacji podpisów.
+ Przed pierwszą instalacją pakietu pozostaw dnsdist
 zamaskowany zgodnie z tą instrukcją, aż firewall i konfiguracja będą gotowe.
 
 ```sh

@@ -27,6 +27,19 @@ def run(*args, input=None):
     return subprocess.run(args, input=input, text=True, capture_output=True, check=True).stdout
 
 
+def install_directory(path):
+    """Make new program/config directories traversable even with umask 077.
+
+    Existing directories keep their permissions, including private parents.
+    Secret state directories are created separately by systemd.
+    """
+    if path.is_dir():
+        return
+    install_directory(path.parent)
+    path.mkdir(mode=0o755)
+    path.chmod(0o755)
+
+
 def validate(config):
     if set(config) != {"instance", "provider", "ipv4", "ipv6", "clients"}:
         raise ValueError("Inventory requires exactly instance, provider, ipv4, ipv6, clients")
@@ -96,7 +109,7 @@ def render(config):
 
 def bind_acl(text):
     text = re.sub(r"/\*.*?\*/|//[^\n]*|\#[^\n]*", "", text, flags=re.S)
-    matches = re.findall(r'acl\s+(?:"(?:klienci_sieci|clients)"|clients)\s*\{([^{}]*)\}\s*;', text)
+    matches = re.findall(r'acl\s+(?:"(?:klienci_sieci|clients)"|(?:klienci_sieci|clients))\s*\{([^{}]*)\}\s*;', text)
     if len(matches) != 1:
         raise ValueError("Expected one literal klienci_sieci/clients ACL in named.conf.options")
     return {ipaddress.ip_network(x.strip(), strict=False) for x in matches[0].split(";") if x.strip()}
@@ -165,13 +178,13 @@ def install(config, files):
     except KeyError:
         run("useradd", "--system", "--home-dir", str(state), "--shell", "/usr/sbin/nologin", instance)
     binary_path = Path(f"/opt/{instance}/encrypted-dns")
-    binary_path.parent.mkdir(mode=0o755)
+    install_directory(binary_path.parent)
     binary_path.write_bytes(binary)
     binary_path.chmod(0o755)
     try:
         for relative, content in files.items():
             target = Path("/") / relative
-            target.parent.mkdir(parents=True, exist_ok=True)
+            install_directory(target.parent)
             target.write_text(content)
             target.chmod(0o755 if relative.startswith("usr/local/sbin/") else 0o644)
         run("fail2ban-client", "-t")

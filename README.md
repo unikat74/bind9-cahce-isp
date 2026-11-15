@@ -114,3 +114,10 @@ Pierwsze wdrożenie zaczynaj od dokumentu wskazanego w indeksie jako „Czysty
 Debian 13”. Nie kopiuj bezpośrednio snapshotów `servers/` na inny system.
 
 Nigdy nie commituj API key, TSIG secret, certyfikatów TLS ani pobranego feedu RPZ.
+
+## FUZ
+
+Wdrożenie FUZ z 15 listopada 2026: [raport i odbiór](docs/FUZ-EXTENSIONS-2026-11-15.md).
+Na obu hostach cache BIND ma limit 2 GiB; działają DNS, DoT, DoH, DoQ
+i DNSCrypt. Forwardery Google IPv6 sprawdzono przed dodaniem; niedostępne
+Cloudflare IPv6 pominięto. Własny klucz API ThreatFox pozostaje tylko na dns1.

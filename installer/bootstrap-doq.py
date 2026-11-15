@@ -69,7 +69,7 @@ def install(config, files):
     try:
         for relative, content in files.items():
             path = Path('/') / relative
-            path.parent.mkdir(parents=True, exist_ok=True)
+            common.install_directory(path.parent)
             path.write_text(content)
             path.chmod(0o755 if relative.startswith(('usr/', 'etc/letsencrypt/renewal-hooks/')) else 0o644)
         pos = old_options.rfind('};')

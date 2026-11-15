@@ -95,6 +95,11 @@ Po udanej kontroli:
 python3 installer/bootstrap-dnscrypt.py installer/dnscrypt.toml --install
 ```
 
+Nowe katalogi programu i konfiguracji otrzymują jawne uprawnienia 0755,
+również przy `umask 077`; istniejące katalogi nie są rozluźniane. Prywatny
+katalog stanu jest tworzony przez systemd z trybem 0700. Kontrola ACL
+akceptuje `acl klienci_sieci` zarówno z cudzysłowami, jak i bez nich.
+
 Instalator:
 
 1. Powtarza kontrolę hosta i odmawia nadpisania istniejącej instalacji,
